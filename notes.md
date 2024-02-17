@@ -285,6 +285,174 @@ int main()
 
 ```
 
+#### linkage
+
+- C ve C++ dillerinde isimlerin bağlantı özellikleri vardır. Bağlantı(linkage), birden fazla kaynak dosyanın olması durumuyla ilgilidir.
+Eğer bir isim birden fazla kaynak dosyada kullnıldığında aynı varlığa ilişkin ise böyle isimlere "external linkage" adı verilir.
+Ama aynı isim farklı kaynak dosyalarda kullanılırken her kaynak dosya için farklı bir varlığa ilişkin ise "internal linkage" adı verilir.
+
+- C'de hatırlamak gerekirse globalde aşağıdaki kod parçacığında bir ifadenin external veya internal olmasının nasıl belirlendiğini hatırlayalım.
+```
+    int x; // external değişkendir.
+    static int x; // internal değişkendir.
+```
+
+- C dilinde bir değişkenin const olması bağlantı özelliğini değiştirmez.
+```
+    const int x = 10; // C'de internal linkage
+```
+C++'da global const isimler internal linkage olur.
+
+- C dilinde const T* türünden T* türüne implicit dönüşüm vardır. Ancak C++'da bu durum sentaks hatasıdır.
+```
+    const int x = 10;
+    int* p = &x; // C dilinde de doğru bir yazım olmamasına rağmen sentaks hatası değildir.
+```
+Ancak C++'da bu durum sentaks hatasıdır.
+
+
+- Aşağıdaki kod parçacığı için;
+```
+    int y = 15;
+    int x = 10;
+    int* const ptr = &x;
+```
+const pointer to int kavramı kullanılır. Anlamı, ptr'nin kendisi const'tur. Yani ptr'nin tüm ömrü boyunca
+x'i göstermesi istenir, ptr'nin başka bir nesneyi göstermesi lojik bir hata olacağından sentaks hatası olması da
+const anahtar sözcüğü ile tanımlanır. C++'da top level const  terimi sıklıkla kullanılır.
+
+- const pointer to int
+- top-level const
+- right const
+
+kavramlarları kullanılır. 
+
+Uyarı: Bu durumda x değişkeninin değer ptr üzerinden değiştirilebilir. ptr'nin gösterdiği nesne değiştirilemez. 
+
+```
+    *ptr = 45; // doğru bir kullanımdır. ptr'nin gösterdiği nesne değişmiyor. ptr hata x'i gösteriyor.
+     ptr = &y; // kullanılamaz. Burada ptr'nin gösterdiği nesne değiştiriliyor.
+```
+
+- Bir de bu durumun tersi söz konusudur.
+```
+    int x = 10;
+    const int* ptr = &x;
+```
+   - pointer to const
+   - low level const
+   - left const
+
+Bu durumda ise ptr'nin gösterdiği nesne olan x, ptr yoluyla değiştirilemez. Yani x sadece salt okuma amaçlı kullanılabilir. 
+```
+    *ptr = 45; // yapılamaz. ptr ile sadece okuma yapılabilir.
+```
+Ancak unutulmamalıdır ki ptr const olmadığı için ptr'nin gösterdiği x nesnesi değiştirilip y yapılabilir.
+```
+    ptr = &y; // legaldir.
+```
+Özetle aşağıdaki gibi toplanabilir;
+```
+	 int x = 10;
+	 int y = 5;
+
+	 int* const ptr1 = &x;
+	 // const pointer to int/top-level const/right const
+	 //*ptr1 = 15; // legaldir
+	 //ptr1 = &y; // illegaldir. 
+
+	 const int* ptr2 = &y;
+	 //pointer to const int/low level const/left const
+	 //*ptr2 = 15; // illegaldir
+	 //ptr2 =&x; // legaldir.
+```
+
+Kullanım örneği: T bir tür olmak üzere: 
+```
+    void func(T* p); // out-param 
+```
+Yukarıdaki fonksiyon mutator bir fonksiyondur. Değiştiricidir. Yani bu fonksiyona
+bir nesnenin adresi gönderilirse bu nesnenin değerleri değiştirilebilir.
+
+Not: Bir de C ve C++'da çok kullanılmasa da in-out param diye bir kavram vardır. Böyle bir fonksiyona 
+bir nesnenin adresi gönderildiğinde o nesnenin verisi okunur, okunan bilgi üzerinden işlem yapılır ve yine 
+aynı nesneye atamalar yapılır. 
+
+```
+    void foo(const T* p); // in-param
+```
+Yukarıdaki fonksiyon sadece p'nin gösterdiği nesnenin değerini okuyabilir. O nesneye herhangi bir şekilde yazma/değiştirme yapamaz.
+Salt okuma amaçlı erişim.
+
+Birde bu iki durumun aynı anda kullanılma hali vardır.
+- const pointer to const int
+```
+    int x = 10;
+    const int* const ptr = &x;
+```
+Bu durumda ptr'nin gösterdiği nesne değiştirilemez, ptr üzerinden nesnenin değeri de değiştirilemez.
+
+
+Uyarı: C++'da hatırlandığı üzere const nesnelere ilk değer vermek mecburiydi. Ancak bu durum const pointer'lar için geçerli değildir.
+```
+    const int* p; // geçerlidir.
+    int* const p; // geçersizdir.
+```
+
+
+#### Scope leakage (kapsam sızıntısı)
+
+Bir değişken tanımlandığında, eğer o değişkeni kullanacağınız alan dışında da o değişkenin ömrü devam ediyorsa, bu duruma
+kapsam sızıntısı denir.
+```
+    int i;
+    for(i = 0; i < 10; ++i) {
+    } 
+```
+Yukarıdaki örnekte eğer i sadece döngü değişkeni olarak kullanılması amaçlanmış ise döngüden sonraki satırlarda da o değişkenin ömrü 
+devam ettiği için burada scope leakage vardır.
+
+- C++ dilinde adresler ile aritmetik türler arasında örtülü dönüşüm yoktur. Ama C'de vardır.
+Örnek olarak:
+```
+    int x = 35;
+    int* p = x;
+```
+Burada amaç x'in adresi ile p pointer'ına ilk değer vermek olabilir. Ancak yukarıdaki şekilde yazıldığında,
+p'ye c'in değeri ile ilk değer verilmiş oluyor. Eşittir'in sağ tarafındaki değişkenin türü int iken sol tarafındaki 
+değişkenin türü int*'dır. C dilinde bu atama implicit olarak gerçekleşir. Doğru bir atama değildir. 
+
+C++ dilinde aritmetik türler ile pointer türler rarasında dönüşüm söz konusu değildir.
+
+Ayrıca C++ dilin de farklı türden değişkenler arasında da tür dönüşümü yoktur. 
+```
+    double dval = 45.12;
+    char* p = &dval;
+```
+Yukarıdaki kod parçacığı C'de geçerli iken C++'da geçerli değildir.
+
+
+- C'de yanlış olmamasına rağmen C++'da sentaks hatası olan bir örtülü(imlicit) dönüşüm örneği void* türünden diğer pointer türlerinedir.
+
+Örnek olarak: 
+```
+    size_t n = 1000;
+    int* p = malloc(n * sizeof(int));
+```
+malloc çağrı ifadesinin geri dönüş değeri void*'dır. Yukarıda p'ye int* türünden ilk değer veriliyor. Bu durum C'de legal bir durum iken yanlış bir kullanımda değildir.
+Ancak C++'da tür dönüştürme operatörü kullanılması gerekir.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
