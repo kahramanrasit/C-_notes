@@ -443,6 +443,213 @@ malloc çağrı ifadesinin geri dönüş değeri void*'dır. Yukarıda p'ye int*
 Ancak C++'da tür dönüştürme operatörü kullanılması gerekir.
 
 
+```
+    enum Color { White, Gray, Brown, Black };
+```
+Yukarıdaki kod parçacığında Color ismini C'de başına enum yazmadan kullanabilmek için typedef'e ihtiyacınız vardır. C++'da böyle bir zorunluluk yoktur.
+
+Underlying type: C'de numaralandırma türü bir tam sayı türüdür. Derleyici implementasyon tarafında numaralandırma türü olarak bir tam sayı türü olarak int kullanıyor. 
+Yani C dilinde underlying type int'tir. Yani aşağıdaki assert her zaman doğrudur.
+```
+#include <stdio.h>
+#include <assert.h>
+
+enum Color { Blue, Black, Magenta };
+
+int main()
+{
+    assert(sizeof(int) == sizeof(enum Color));
+}
+ 
+```
+
+C++'da underlying type int olmak zorunda değildir. Eğer özel bir sentaks kullanarak underlying type belirtilmez ise numaralandırma sabitlerinin(enumaration constant, enumarator) değerleri söz konusudur.
+Örneğin Brown enumaratör'ünü int sayı sınırlarına sığmayan bir tam sayı sabiti kullanılırsa derleyici C++'da underlying type'ı uygun şekilde değiştirir.
+
+
+- C dilinde aritmetik türlerden enum türlerine otomatik (implicit) dönüşüm vardıır.
+```
+    enum Color { White, Gray, Brown, Black };
+
+    int main()
+    {
+        enum Color mycolor;
+        mycolor = 3; // implicit type conversion
+    }
+
+```
+- C dilinde farklı enum türleri arasında (implicit dönüşüm vardır.
+```
+    enum Color { White, Gray, Brown, Black };
+    enum Pos { On, Off, Hold };
+
+    int main()
+    {
+        enum Color mycolor = Brown;
+        enum Pos mypos = Off;
+        mycolor = mypos; // implicit type conversion
+    }
+
+```
+Yukarıdaki örneklerde sentaks hatası yoktur. 
+
+Ama C++ dilinde aritmetik türlerden numaralandırma türlerine ve farklı numaralandırma türleri arasında (implicit) örtülü tür dönüşümü kesinlikle yoktur. 
+
+
+
+- C'de karakter sabitlerinin türü int'dir. Yani C'de 'A' ifadesinin türü char değil int'dir. C++ ise karakter sabitlerinin türü char türündendir.
+
+```
+#include <stdio.h>
+
+int main()
+{
+	printf("%zu\n", sizeof('A'));
+}
+```
+Yukarıdaki kod parçacığını C'de ve C++'da derlendiğimizde C'de int türü olduğu için 4 output'u görülür. C++'da görülen değer 1'dir. 
+Yani özetle C++'da karakter sabitlerinin türü char türdendir.
+
+Hatırlatma: array decay / array to pointer conversion, bir dizi ismini bir ifade içerisinde kullandığınız zaman iki istisna hariç dizi ismi dizinin ilk 
+elemanının adresine dönüşür.
+
+- String literal'leri C'de char dizi iken, C++'da const char dizidir.
+
+C'de string literali bir ifade içinde kullanıldığında char* türüne dönüşürken, C++'da ise const char* türüne dönüşür.
+ Her iki dilde de string literalini değiştirme girişimi tanımsız davranış (undefined behavior ub) olur.
+
+
+Unevaluated context: Bir ifadenin karşılığında işlem kodu üretilmeyen durumlara "unevaluated context" adı verilir.
+
+C'de array decay'e istisna olan bir durum dizi isminin sizeof operatörünün operantı olmasıdır. C'de unevaluated context sadece sizeof operatörü için geçerli iken
+C++'da unevaluated context 8 tane vardır. 
+
+Aşağıdaki kod parçacığı ile bu durum açıklanabilir:
+```
+int a[10] = { 1, 5, 7 };
+
+printf("%zu\n", sizeof a); // burada array decay gerçekleşmediği için ekranda 4*10 'dan 40 değeri görülür.
+printf("%zu\n", sizeof &a[0]); // Burada ise dizinin ilk elemanın size'ı olan 4 görülür.
+```
+
+Hatırlatma: C'de bir dizinin adres operatörüyle adresinin alınması durumunda elde edilen değerin türü, 10 elemanlı bir dizinin adres türüdür.
+```
+int a[10] = { 1, 5, 7 };
+&a; // türü int (*)[10]'dur. 
+```
+
+- Aşağıdaki kod parçacığı C'de geçerli olmasına rağmen C++'da geçerli değildir.
+```
+    char* p = "batuhan";
+```
+C++'da doğrusu:
+```
+    const char* p = "batuhan";
+```
+Şeklindedir. "batuhan" bilgisi const char bir veridir. Array decay ile const char*'a dönüşür. C'de donst char*'dan char*'a implicit dönüşüm gerçekleşirken C++'da bu dönüşüm gerçekleşmez.
+
+
+- Aşağıdaki kod parçacığı için;
+```
+char str[4]= "anil";
+```
+C'de geçerli ama tehlikeli bir yazım şeklidir. Tehlikeli olmasının sebebi bu yazı null terminated byte string değildir. Yani bu dizi
+adresi null terminated byte string olarak kullanılırsa örneğin sonunda bir null karakter bekleyen bir fonksiyona argüman olarak gönderilirse, 
+tanımsız davranış (undefined behavior ub) olur. Ancak null terminated byte string olarak kullanılma niyeti yoksa yani memset, memcpy gibi fonksiyonlarla
+kullanılması planlanıyorsa herhangi bir problemle karşılaşılmaz. Ama C++'da bu durum sentaks hatasıdır.  C++'da null karakterinin de olduğu düşünüldüğü için array'in boyutu 5 olmalıdır.
+
+
+- C'e hatırlatma:
+```
+short s1 = 5, s2 = 7;
+s1 + s2; // integral promotion
+```
+C'de int altı türler işleme sokulduğunda int türüne dönüşüm (integral promotion) gerçekleşir.
+
+integral promotion örneği:
+```
+char c = 'A';
+c // türü char
++c // türü int
+-c // türü int
+```
+C'de ve C++'da char türü ya da int altı türler işaret operatörü + veya -'nin operantı olduğunda, int'e tür dönüşümü gerçekleşir.
+
+Hatırlatma:
+```
+int x = 10;
+x > 5 ? 3 : 4.7;
+```
+Yukarıdaki ifadenin türü double olur çünkü koşul operatörünün 2. ve 3. operantları arasında yine implicit type conversion söz konusudur. 
+
+- C'de hatırlatma olarak değer kategorisi (value category): C'de iki tane değer kategorisi vardır.
+```
+L value expression
+R value expression
+```
+Bir ifadenin L value olması demek, C'de o ifadenin bellekte tutulan bir nesneye karşılık gelmesi demektir.
+Bir ifadenin R value olması doğrudan bellekte kalıcı bir yeri olmayan ancak bir hesaplamaya yönelik bir ifade olması demektir.
+örneğin bir değişkene ilk değer vermek için ya da bir operatör ile oluşturulan ifadenin değerinin 
+hesaplanması için oluşturulan ifadelerdir.
+
+C dili için bir ifadenin L veya R value olduğunu anlamanın bir yolu adres operatörünün operantı yapmaktır. 
+Eğer derleyici bir sentaks hatası işaretler ise R value expression'dır.
+Eğer derleyici bir sentaks hatası işaretlemez ise L value expreession'dır.
+
+Bir not: x bir int değer ise +x ifadesi C ve C++ dillerinde R value expressiondur.
+
+İşaret operatörü + son derece önemli bir operatördür. 
+- Bir L value expression'u operant olarak aldığında elde ettiğiniz ifade R value expression olur.
+- Eğer işaret operatörü +'nın operantı olan değişken int altı türlerden ise integral promotion olarak int türüne dönüşüm gerçekleşir.
+
+C dilinde R value expression kategorisinde olan bazı ifadeler C++ dilinde L value expression olabiliyor.
+- Örnek olarak ön ek olan ++, -- operatörleriyle oluşturulan ifadeler C dilinde R value expression iken C++ dilinde L value expression'dır.
+```
+x bir int değişken olarak tanımlandığı varsayılırsa;
+++x; // C'de R value, C++'da L value
+x = 5; // C'de R value expression iken C++'da L value olur
+&(x = 5) // şeklinde derleyicinin sentaks hatası vermesi durumuna göre anlaşılabilir.
+```
+virgül operatöründe de aşağıdaki gibi bir farklılık söz konusudur.
+```
+int x = 10;
+int y = 20;
+
+(x, y) = 77; // C'de hata alınır çünkü (x, y) bir R value'dur.
+// Ancak C++'da (x, y) ifadesi bir L value expression olduğu için
+// virgül operatörünün ürettiği değer sağ operantın ürettiği değerdir. Bu sebeple y değişkenine 77 değeri atanmış olur.
+```
+
+C++'da value category:
+- Primary value category
+  - PR value (pure R value)
+  - L value
+  - X value (Ex-pired value)
+- Combined value category
+  - PR value ile X value'nın birleşim kümesine R value denir.
+  - L value ile X value'nın birleşim kümesine GL value denir. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
