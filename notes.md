@@ -14,15 +14,15 @@ C++ multi-paradigm bir dildir.
     - prosedürel programlama
     - nesne yönelimli / nesne tabanlı
     - generic programlama (türden bağımsız programlama)
-    - fonksiyone programlama / functional programming
+    - fonksiyonel programlama / functional programming
     - data abstraction
 ```
 
 C ile C++ dili arasındaki farklılıkların hepsi olmasa da bir kısmı aşağıdaki nedenlerle ilgilidir. 
-- C küçük ve genel bir dildir. C dilinde derleme zamanında yapılan kontroller sınırlıdır.
+- C programlama dili küçük ve genel bir dildir. C dilinde derleme zamanında yapılan kontroller sınırlıdır.
 Yani C ve C++ dilleri statik tür kavramına sahip olmasına rağmen C dilinde statik tür kontrolü daha gevşektir, zorlayıcı değildir.
-Bu durum da hata yapma riskini artırır. Örneğin C dilinde farklı türler arasındaki atama ve kopyalama durumlarının çoğu legaldir.
-Günümüzde moderin derleyiciler bu tip hatalara yönelik uyarı mesajları veriyor olsalar da dilin kurallarına göre farklı türler arasında çoğunlukla "type conversion"
+Bu durum hata yapma riskini artırır. Örneğin C dilinde farklı türler arasındaki atama ve kopyalama durumlarının çoğu legaldir.
+Günümüzde modern derleyiciler bu tip hatalara yönelik uyarı mesajları veriyor olsalar da dilin kurallarına göre farklı türler arasında çoğunlukla "type conversion"
 söz konusudur. Fakat C++ dili tür kontrolü konusunda çok daha katı(strict)'dir.
 ```
     C    -> loose typing
@@ -66,8 +66,8 @@ int func()
 }
 ```
 Normalde bar ismi kullanıldığında name look up ile aranmak zorundadır. Aranan isim(identifier) olan bar, derleyici tarafından bulunamaz ise sentaks 
-hatası olmalıdır. Ama böyle bir kodu bir C derleyicisinde derlediniz zaman kodun geçerli olduğu görülür. C'de derleyici bar ismini arayıp bulamadığında
-yani name look up başarısız olduğunda, fonksiyon çağrı operatörünün operantının bar olduğu görüldüğünde, bu fonksiyonun başka bir modülde tanımlanmış
+hatası olmalıdır. Ama böyle bir kodu bir C derleyicisinde derlediğiniz zaman geçerli olduğu görülür. C'de derleyici bar ismini arayıp bulamadığında
+yani name look up başarısız olduğunda, fonksiyon çağrı operatörünün operantı bar olduğu görüldüğünde, bu fonksiyonun başka bir modülde tanımlanmış
 external olan dışarıya açılmış geri dönüş değeri int olan ismi bar olan parametrik yapısı hakkında bilgi edinmediği bir fonksiyon olarak algılayacaktır.
 Bu duruma implicit function declaration denir. Ancak bu durum C++'da sentaks hatasıdır.
 
@@ -84,7 +84,7 @@ Ancak C++ dilinde bir fonksiyon tanımlanırken parametre değişkeni yazılmad�
 - C'de fonksiyonun tüm parametre değişkenlerine isim verilmek zorunda iken C++'da fonksiyonun parametre değişkenine isim
 verilmek zorunda değildir. Bu durum C++'ın function over loading özelliğiyle alakalıdır.
 ```
-void func(void)
+void func(int)
 {
 }
 ```
@@ -112,7 +112,7 @@ int isupper(int c);
 ```
 Bu fonksiyon test fonksiyonu olmasına rağmen geri dönüş değeri int türdendir. Ancak C++'da bu tür  test fonksiyonları bool türünden olmalıdır.
 
-Yani C'de //false veya //true bool türden sabitler değildir. C99 ile eklenen bir başlık dosyası vardır.
+Yani C'de false veya true bool türden sabitler değildir. C99 ile eklenen bir başlık dosyası vardır.
 ```
 #include <stdbool.h>
 ```
@@ -173,14 +173,14 @@ Yukarıdaki durumun tersi de geçerlidir.
 bool flag = true;
 bool is_on = false;
 
-int x = flag;  //true
-int y = is_on; //false
+int x = flag;  // x'in değeri 1 olur
+int y = is_on; // y'nin değer 0 olur
 ```
 
 Uyarı: Boolean türünden pointer türüne aşağıdaki kod parçacığındaki gibi bir dönüşüm kesinlikle yoktur. 
 ```
 bool is_on = false;
-int *ptr = is_on
+int *ptr = is_on;
 ```
 
 
@@ -209,7 +209,7 @@ int main()
     struct Data mydata; // doğru kullanımdır.
 }
 ```
-Yani tek başına tag olan isim türü niteyen, türün yerine geçen isim değildir.
+Yani tek başına tag olan isim; türü niteyen, türün yerine geçen isim değildir.
 Dolayısıyla C'de bir ismi doğrudan bir yapı türünün ismi olarak kullanmak istiyorsak aşağıdaki gibi bir typedef (tür eş ismi) bildirimi zorunludur.
 
 ```
@@ -288,7 +288,7 @@ int main()
 #### linkage
 
 - C ve C++ dillerinde isimlerin bağlantı özellikleri vardır. Bağlantı(linkage), birden fazla kaynak dosyanın olması durumuyla ilgilidir.
-Eğer bir isim birden fazla kaynak dosyada kullnıldığında aynı varlığa ilişkin ise böyle isimlere "external linkage" adı verilir.
+Eğer bir isim birden fazla kaynak dosyada kulalnıldığında aynı varlığa ilişkin ise böyle isimlere "external linkage" adı verilir.
 Ama aynı isim farklı kaynak dosyalarda kullanılırken her kaynak dosya için farklı bir varlığa ilişkin ise "internal linkage" adı verilir.
 
 - C'de hatırlamak gerekirse globalde aşağıdaki kod parçacığında bir ifadenin external veya internal olmasının nasıl belirlendiğini hatırlayalım.
@@ -299,7 +299,7 @@ Ama aynı isim farklı kaynak dosyalarda kullanılırken her kaynak dosya için 
 
 - C dilinde bir değişkenin const olması bağlantı özelliğini değiştirmez.
 ```
-    const int x = 10; // C'de internal linkage
+    const int x = 10; // C'de external linkage
 ```
 C++'da global const isimler internal linkage olur.
 
@@ -330,7 +330,7 @@ kavramlarları kullanılır.
 Uyarı: Bu durumda x değişkeninin değer ptr üzerinden değiştirilebilir. ptr'nin gösterdiği nesne değiştirilemez. 
 
 ```
-    *ptr = 45; // doğru bir kullanımdır. ptr'nin gösterdiği nesne değişmiyor. ptr hata x'i gösteriyor.
+    *ptr = 45; // doğru bir kullanımdır. ptr'nin gösterdiği nesne değişmiyor. ptr hala x'i gösteriyor.
      ptr = &y; // kullanılamaz. Burada ptr'nin gösterdiği nesne değiştiriliyor.
 ```
 
@@ -439,7 +439,7 @@ Yukarıdaki kod parçacığı C'de geçerli iken C++'da geçerli değildir.
     size_t n = 1000;
     int* p = malloc(n * sizeof(int));
 ```
-malloc çağrı ifadesinin geri dönüş değeri void*'dır. Yukarıda p'ye int* türünden ilk değer veriliyor. Bu durum C'de legal bir durum iken yanlış bir kullanımda değildir.
+malloc çağrı ifadesinin geri dönüş değeri void*'dır. Yukarıda p'ye int* türünden ilk değer veriliyor. Bu durum C'de legal bir durum iken yanlış bir kullanım da değildir.
 Ancak C++'da tür dönüştürme operatörü kullanılması gerekir.
 
 
@@ -478,7 +478,7 @@ C++'da underlying type int olmak zorunda değildir. Eğer özel bir sentaks kull
     }
 
 ```
-- C dilinde farklı enum türleri arasında (implicit dönüşüm vardır.
+- C dilinde farklı enum türleri arasında (implicit) dönüşüm vardır.
 ```
     enum Color { White, Gray, Brown, Black };
     enum Pos { On, Off, Hold };
