@@ -626,8 +626,8 @@ C++'da value category:
   - L value
   - X value (Ex-pired value)
 - Combined value category
-  - PR value ile X value'nın birleşim kümesine R value denir.
-  - L value ile X value'nın birleşim kümesine GL value denir. 
+  - R value -> PR value ile X value'nın birleşimi.
+  - GL value -> L value ile X value'nın birleşimi.
 
 
 
