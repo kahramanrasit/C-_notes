@@ -366,6 +366,23 @@ Ancak unutulmamalıdır ki ptr const olmadığı için ptr'nin gösterdiği x ne
 	 //*ptr2 = 15; // illegaldir
 	 //ptr2 =&x; // legaldir.
 ```
+- Bir örnek: typedef ismi bir pointer türünün eş ismi olduğunda const anahtar sözcüğü her zaman top-level constluk yapar. low-level constluk olmaz.
+```
+#include <stdio.h>
+
+typedef int* iptr;
+
+int main()
+{
+	int x = 5;
+	int y = 45;
+
+	const iptr p = &x;
+	p = &y; // sentaks hatası
+	*p = 30; // geçerli
+}
+
+```
 
 Kullanım örneği: T bir tür olmak üzere: 
 ```
@@ -660,6 +677,607 @@ int main()
 	print_val_cat(x);
 }
 ```
+
+
+- C ve C++ dillerinde neden undefined behavior vardır:
+C ve C++ derleyicileri optimizing compilers'dır. Yani kodu yeniden düzenliyorlar. Zaten C ve C++ dillerinin bu kadar
+verimli olmasındaki temel faktör optimizing compiler olmasıdır. Derleyicinin etkin bir optimizasyon yapabilmesi için sizin kodunuzda
+tanımsız davranış olmadığını temin etmeniz gerekiyor. Derleyici tarafından Undefined behavior'un olup olmadığını kontrol etmek karmaşık ve optimizasyon işlemini
+uzatan bir durumdur. Siz undefined behavior'un olmadığını temin ettiğinizde bu karmaşık işlemlerden uzak bir optimizasyon yapılıyor ve bu da programınızın
+performansını artırıyor.
+
+- Unspecified behavior: Derleyicinin nasıl bir kod üreteceği konusunda herhangi bir şekilde bağlayıcılığının olmaması durumudur.
+Yazılan kodda unspecified behavior olması yanlış bir durum değildir. Ancak unspecified behavior olduğunu bilmeden buna güvenerek kod yazmak ciddi
+problemlere yol açabilir.
+Örnek olarak:
+```
+    x = f1() + (f2() * 5);
+``` 
+Yukarıdaki kod parçacığında * operatörü, + operatöründen daha önceliklidir ama bu operant olan ifadelerin zamansal olarak daha önce ya da
+daha sonra yapılacağı anlamına gelmez. Burada hangi fonksiyonun daha önce çağırılacağı unspecified behavior'dur.
+
+Örnek bir unspecified behavior:
+```
+	const char* p1 = "aytun";
+	const char* p2 = "aytun";
+
+	if (p1 == p2)
+		std::cout << "dogru char" << std::endl;
+	else
+		std::cout << "yanlis char" << std::endl;
+```
+Yukarıdaki kod parçacığında if'in doğru kısmına girer mi girmez mi konusu unspecified behavior'dur. Bunun sebebi derleyicinin nasıl bir kod optimizasyonu yapacağını
+bilemiyoruz. Yani derleyici "aytun" olan const char* sabitini ikinci kez gördüğünde bu bilgi ömrü boyunca değişmeyeceği için ve hali hazırda bu bilgiyi bir
+adrese atadığı için bu bilgiyi aynı adreste tutabilir. Bu durumda if'in doğru kısmına girilecektir, yani p1'in adresi ile p2'nin adresi aynıdır. 
+Ancak derleyici her ihtimale karşı bu bilgiyi farklı bir adresde de tutabilir. Bu durumda else kısmına girecektir. Ayrıca aynı kodu her çalıştırdığınızda
+aynı şekilde tepki alacağınızın da garantisi yoktur. Bir optimizasyonda if'in doğru kısmına girerken diğer bir optimizasyonda else kısmına girebilir. 
+
+Ayrıca yukarıdaki örneği aşağıdaki dizide olduğuyla karıştırmamak gerekiyor. Çünkü aşağıda iki farklı const dizi tanımlanıyor. Aşağıda bir unspecified 
+behavior yoktur. Aşağıdaki iki farklı const char dizi tanımlanmıştır.
+
+
+```
+
+
+	const char a[6] = "aytun";
+	const char b[6] = "aytun";
+
+	if (a == b)
+		std::cout << "dogru dizi" << std::endl;
+	else
+		std::cout << "yanlis dizi" << std::endl;
+```
+
+
+- implementation defined: Derleyiciye bağlı denebilir. İmplementation defined, unspecified behavior'un bir alt kategorisidir. Farkı ise
+derleyici üzerinden bu durum dökümante edilmiş olmasıdır. Derleyici bu durumda hep aynı yolu seçerek kod üretecektir.
+Mesela int türünün storage ihtiyacı 2, 4, 8 byte olabilir. Bu derleyiciye bağlı ve dökümante edilmiş olmalıdır.
+
+
+- C'nin standart kütüphanesi C++'ın standart kütüphanesinin bir bileşenidir. C++'da C'nin standart kütüphanelerini include ederken
+başına c harfi ekleni ve .h kısmı yazılmaz.
+```
+#include <stdio.h> // C'de
+#include <cstdio> // C++'da
+```
+
+
+Default initialization: Değişkene tanımlama yapılırken ilk değer vermeden yapılmasıdır. 
+
+Eğer bir değişken statik ömürlü olarak (global değişken, statik anahtar kelimesi ile tanımlanmış veya string literalleri karşılığı ile oluşturulan char dizi)
+initialize edildiğinde ilk aşama olarak derleyici zero initialization denen süreci tamamlar.
+
+Zero initialization: 
+- aritmetik türler için 0
+- bool için false
+- pointerlar için ise nullptr olur.
+
+copy initialization:
+```
+int main() { int x = 10; }
+```
+
+- C'de olmayan C++'da olan tanımlama şekilleri:
+
+```
+int x(98); // direct init
+int y{38}; // uniform, brace init
+```
+
+- Brace init'in diğer initialization şekillerinden bir farkı vardır. Narrowing conversion'a izin vermez.
+```
+double y = 5.6;
+int x = y; // burada y sayısının ondalık kısmı direk kaybolur ve x'e 5 sayısı atanır.
+```
+Ama eğer initialization brace init şeklinde olursa sentaks hatası olur.
+```
+double y = 5.6;
+int x{y}; // sentaks hatasıdır. 
+```
+
+Ayrıca brace init ile bir değişkeni initialize ettiğinizde o değer zero init olur.
+```
+int x; // garbage value'dur
+int y{}; // zero init olduğu için y = 0 olur.
+```
+
+- C++ diziler için aşağıdaki initialization şekillerinin hepsi zero init'dir
+```
+int a1[4] = {0};
+int a2[4] = {};
+int a3[4]{}; 
+```
+
+# Referance Semantiği (references)
+
+- C'de sadece pointer semantiği var iken C++'da pointer semantiğine alternatif olarak reference semantiği vardır.
+C++'da reference semantiğine ihtiyaç uyulmasının sebebi; pointerlar C++'ın bazı araçları ile iyi bir uyum sağlamıyor.
+Yani öyle araçlar var ki orada pointerın kullanılması o aracın implementasyonunu zorlaştırıyor. Dilin kuralları arasında uyum sağlanmıyor.
+Bunun en başında operator overloading dediğimiz konu başlığı geliyor. Eğer sadece pointer semantiği kullanılsaydı, operatör overloading
+özelliği tamamen legal bir şekilde implemente edilemezdi.
+
+- Reference semantiği pointerlara alternatiftir ama sadece dil katmanında bir alternatifdir. Yani yazılan kod assembly formatına dönüştürüldüğünde
+aslında bir fark olmadığı görülür.
+
+- Modern C++'da reference semantiği denildiğinde 3 ayrı reference kategorisi vardır.
+	- L value reference (sol taraf reference)
+        - R value reference (sağ taraf reference)
+          		- move semantic
+          		- perferct forwarding (generic programming ile alakalı)
+        - Forwarding reference (universal reference)
+  
+
+```
+int x = 10;
+int& r = x; // L value reference
+int&& rr = 35; // R value reference
+auto&& y = 35; // forwarding/universal reference
+```
+
+### L Value Reference
+
+- Bir L value reference ismi (identifier), bir nesnenin yerine geçiyor, yani bir reference kullanıldığında aslında o reference'ın yerine geçtiği nesne kullanılıyor.
+- Reference'ların bildiriminde & declaratörü kullanılır.
+```
+int x = 10;
+int& r = x; 
+```
+- Reference'lar default initialize edilemezler.
+- L reference'lar ilk değerini L value expression ile almalıdır.
+- Reference'ları initialize etme şekli bir değişkene değer verme şekilleriyle aynıdır.
+```
+int x = 10;
+int& r = x;
+int& r(x);
+int& r{x};  
+```
+
+- Reference'lar pointer'ı da reference olarak gösterebilir:
+```
+int *p = nullptr;
+int*& r = p;
+```
+
+- Reference olarak bir ismi tanımladığınızda artık reference demek o değişken demektir.
+```
+#include <iostream>
+
+int main()
+{
+	int x{ 3 };
+	int& r{ x };
+	int y = 99;
+
+	std::cout << "x = " << x << std::endl;
+
+	r = 67; // burada 'nin değeri yani artık x'in değeri değişiyor ve 67 oluyor.
+	std::cout << "x = " << x << std::endl;
+
+	++r; // burada x bir artırılmış oluyor.
+	std::cout << "x = " << x << std::endl;
+
+	r = y; // !burada r artık y'yi gösteriyor gibi bir yanılgıya düşmemek gerek!!
+	// r = y demek aslında x = y demek, yani x'e y'nin değeri atanmış demektir.
+	std::cout << "x = " << x << std::endl;
+}
+```
+
+- Bir reference'ı tanımlıyoruz ve bir nesnenin yerine geçmesini sağlıyoruz. Yani reference olan tanımlanan ismi, tanımladığımız nesneye bağlamış oluyoruz.
+Bu duruma teknik ingilizce olarak "bind" denir.
+!!! reference'lar rebind edilemezler. Yani ömürleri boyunca sadece tek bir nesneyi gösterirler.
+
+- Pointerlarda bir pointer başka bir pointer'ın adresini gösterebilir. (pointer to pointer) Ancak referance başka bir referance'ı gösteremez, eğer öyle tanımlanırsa
+artık iki reference nesne si de aynı reference edilen nesneye bind edilmiş olur.
+
+```
+#include <iostream>
+
+int main()
+{
+	int x = 10;
+	int* p = &x;
+	int** ptr = &p; // pointer to pointer
+
+	int y = 5;
+	int& r = y;
+	int& rr = r;
+
+	std::cout << y << " " << r << " " << rr << " " << std::endl;
+	r = 99;
+	std::cout << y << " " << r << " " << rr << " " << std::endl;
+	rr = 150;
+	std::cout << y << " " << r << " " << rr << " " << std::endl;
+
+}
+```
+
+- reference'ların pointer'ı göstermesi durumuna dair örnek:
+```
+#include <iostream>
+
+int main()
+{
+	int ival = 35;
+	int* p = &ival;
+
+	int*& rp = p; // rp reference olarak p'ye bind
+
+	*rp = 99; // burada ival'in değeri değiştirildi.
+	std::cout << ival << std::endl;
+
+	int x = 15;
+	rp = &x; // burada artık p pointer'ı ival'i değil x'i gösteriyor.
+
+}
+```
+
+- Bir reference isim bir dizinin yerine geçebilir.
+```
+#include <iostream>
+
+int main()
+{
+	int a[]{ 1, 3, 5, 7, 9 };
+	int(*pa)[5] = &a; // diziyi gösteren pointer
+	int* p = a; // pointer dizinin ilk elemanını gösterir(array-decay)
+
+	int(&ra)[5] = a; // a dizisini gösteren ref ifade.
+	
+	for (int i = 0; i < 5; ++i)
+		std::cout << ra[i] << " " << a[i] << " " << *(p + i) << std::endl;
+}
+```
+
+
+- Bir diziye bağlı olan reference'ı pointer'ı initialize ederken kullanırsanız array decay yine görülür.
+```
+#include <iostream>
+
+int main()
+{
+	int a[]{ 1, 3, 5, 7, 9 };
+	int(&ra)[5] = a;
+
+	int* p = ra; // burada array-decay uygulanır ve p pointer'ı a array'inin ilk elemanının adresini gösterir.
+	
+}
+```
+
+- Reference semantiğinin struct'larda kullanımı:
+```
+#include <iostream>
+
+struct Data {
+	int a, b, c;
+};
+
+int main()
+{
+	Data myData = { 3, 5, 7 };
+	Data& rx = myData;
+	rx.a = 10;
+}
+```
+
+
+- Reference semantiğinde türe ilişkin not:
+```
+#include <iostream>
+
+
+int main()
+{
+	int x = 10;
+	int& r{ x };
+
+	r; // r ifadesinin türü int
+	r = 15; // r değişkeninin türü int&'dır
+
+}
+```
+
+- Reference'lar iki şekilde çok sık kullanılıyor.
+	- Bir nesneyi bir fonksiyone gönderirken. (call by reference)
+ 	- Bir fonksiyonun kendisini çağıran koda bir nesnenin kendisini göndermesi/iletmesi.
+
+- Call by reference için pointer ve reference kullanımı:
+```
+#include <iostream>
+
+void func_pointer(int* p)
+{
+	*p = 20;
+}
+
+void func_ref(int& r)
+{
+	r = 15;
+}
+
+int main()
+{
+	int x = 1;
+
+	func_pointer(&x);
+	std::cout << x << std::endl;
+
+	func_ref(x); 
+	std::cout << x << std::endl;
+}
+```
+
+- Call by reference durumu için C ile C++ arasındaki farkı anlamak için bir örnek:
+```
+int main()
+{
+	int x = 45;
+	//func(x); 
+}
+```
+Yukarıda kod parçacığı için x'in değeri sorulursa, eğer C dili üzerinden konuşuluyorsa, x'in değeri kesinlikle değişmez. 
+C'de call by reference kavramı sadece adresler ile yapılabilir. 
+Ancak C++ için konuşuluyorsa x değerinin değişme olasılığı vardır. func tanımı görülmeden yorum yapılamaz.
+
+
+- L value reference'a, R value expression ile ilk değer veremeyiz. L value expression olmalıdır.
+```
+	int& r = 10; // geçersizdir.
+```
+
+- Pointer semantiğinde olduğu gibi referance semantiğinde de referance'ın türü ile ona ilk değer verecek ifadenin türü uyumlu olmalıdır.
+```
+	unsigned int uval {56u};
+	int& r = uval; // sentaks hatasıdır.  
+```
+
+
+- Reference semantiğine göre bir reference'i tanımlarken ilk değer veren ifade bir değişken ismi olmak zorunda değildir. Bir L value expressiion olmak zorundadır.
+```
+#include <iostream>
+
+int main()
+{
+	int a[5]{ 1, 2, 3, 4, 5 };
+	int* p = a; // array-decay
+	int& r = *p; // r artık dizinin ilk elemanını her zaman gösteriyor.
+
+	std::cout << r << std::endl;
+}
+```
+
+# L value reference ve const semantiği
+
+Reference değerler zaten ömrü boyunca sadece bir değişkeni gösterecektir. Yani pointer'lardaki top-level const semantiği otomatik
+olarak zaten reference'larda geçerli oluyor. Ancak low-level const pointer karşılığı olarak const anahtar sözcüğü kullanılıyor.
+```
+#include <iostream>
+
+int main()
+{
+	int x = 45;
+	const int& r = x; // yani r üzerinden x sadece okuma işlemi yapılabilir.
+	r++; // sentaks hatasıdır.
+}
+```
+
+- Fonksiyonlarda kullanım şekli olarak:
+```
+void func(T&);  // setter-mutator
+void func(const T&) //getter - accessor
+```
+
+- Ayrıca const bir nesneyi const olmayan bir reference'a tanımlamak sentaks hatasıdır.
+```
+#include <iostream>
+
+int main()
+{
+	const int x = 10;
+	int& r = x; // sentaks hatasıdır.
+	const int& r = x; // doğru kullanımdır.
+	
+}
+```
+
+
+- const reference'lara, farklı türden nesnelerle ilk değer verildiğinde görüntüde yanıltabilir. Çünkü reference o nesnenin yerinde geçmez. Reference bu durumda derleyicinin oluşturduğu
+geçici nesneye bind oluyor.
+```
+#include <iostream>
+
+int main()
+{
+	int x = 10;
+	const double& dr = x;
+
+	std::cout << x << " " << dr << std::endl;
+
+	x = 15; // x nesnesi değişirken dr reference'ı aynı kalır.
+	std::cout << x << " " << dr << std::endl;
+}
+```
+
+- Benzer şekilde const reference'a R value bir değer verilebilir.
+```
+#include <iostream>
+
+int main()
+{
+	const int& r = 15; // sentaks hatası olmuyor
+}
+```
+
+- Fonksiyonlar için incelediğimizde;
+```
+void func(T&); // sadece L value ile çağırılabilir.
+void func(const T&); // R value ile de çağırılabilir.
+```
+
+
+# type deduction (tür çıkarımı)
+
+run-time ile hiçbir alakası yoktur. Tamamen compile-time'a ilişkin bir senaryodur. Kodda bir bilgi belirtilmemesine rağmen derleyici, 
+kullanılan context'e bakarak hangi türün kastedildiğini tanımlıyor.
+- auto
+- decltype
+- decltype(auto)
+- template
+
+
+Sentaks'ı:
+```
+auto x = expr;
+```
+Yukarıdaki tanımlamada çıkarım auto kısmı için yapılır.
+```
+int y = 45;
+auto y = 45; // iki ifade birbiriyle aynıdır. int y = 45 olur.
+```
+
+
+Uyarı: const bir nesne ile auto kullanıldığında const'luk düşer.
+```
+#include <iostream>
+
+int main()
+{
+	const int cx = 5;
+	auto y = cx; //y'nin türü const int değildir. int'tir.
+}
+```
+
+Eğer ilk değer veren ifade bir reference değişkenin oluşturduğu ifade ise reference'lik de düşüyor.
+```
+#include <iostream>
+
+int main()
+{
+	int x = 19;
+	int& r = x;
+
+	auto y = r; // y'nin türü int'tir.
+}
+```
+
+- Dizilerde auto kullanıldığında array-decay kuralı geçerli olur.
+```
+#include <iostream>
+
+int main()
+{
+	int a[] = { 1, 3, 5 };
+	auto aa = a; // aa'nın türü int*'dır.
+}
+```
+
+- Normal bir const int değişken için auto kullanıldığında const'luk düşüyor demiştik. Diziler
+söz konusu olunca const'luk düşmez!
+```
+#include <iostream>
+
+int main()
+{
+	const int y[5] = { 2, 4, 6 };
+
+	auto x = y; // x'in türü const int* olur.
+}
+```
+
+- type deduction da pointer'lar için const anahtar sözcüğü kullanıldığında;
+  	- top-level const kullanıldığı ise const düşer.
+  	- low-level const kullanıldığı ise const korunur.
+```
+#include <iostream>
+
+int main()
+{
+	int x = 10;
+
+	const int* lowp = &x;
+	int* const topp = &x;
+	
+	auto p = lowp; // türü const int*'dır.
+	auto ptr = topp; // türü int*'dır, constluk düştü.
+
+}
+```
+
+- Fonksiyonlar için auto:
+```
+#include <iostream>
+
+int foo(int);
+
+int main()
+{
+	auto fp = foo;
+	auto fp1 = &foo;
+	int (*fp2)(int) = foo;
+
+}
+```
+
+- reference declaratörü kullanıldığında const'luk düşmez.
+```
+#include <iostream>
+
+int main()
+{
+	const int x = 10;
+	auto& r = x; // türü const int& olur.
+
+}
+```
+- Diziler için kullanım şekli:
+```
+#include <iostream>
+
+int main()
+{
+	int a[3] = { 1, 4, 5 };
+	auto& r = a; // array decay gerçekleşmez. r'nin türü int(&r)[3] olur
+}
+```
+
+- const char* diziler için:
+```
+#include <iostream>
+
+int main()
+{
+	auto x = "batuhan"; // const char* türündendir.
+	auto& y = "selim"; // const char(&)[6] türünden olur.
+}
+```
+- Fonksiyonlar için auto kullanımı:
+```
+#include <iostream>
+
+int foo(int);
+
+int main()
+{
+	auto f1 = foo; // int (*f1)(int) = foo ile aynıdır.
+
+	auto f2 = &foo; // int (*f2)(int) = &foo ile aynıdır.
+
+	auto& f3 = foo; // int (&f3)(int) = foo ile aynıdır.
+
+}
+```
+
+Bir örnek:
+```
+#include <iostream>
+
+int foo(int);
+
+int main()
+{
+	auto& x = &foo;  // sentaks hatasıdır. Sebebi ise &foo ifadesinin R value expression olmasıdır.
+}
+```
+
 
 
 
