@@ -680,7 +680,7 @@ int main()
 
 
 - C ve C++ dillerinde neden undefined behavior vardır:
-C ve C++ derleyicileri optimizing compilers'dır. Yani kodu yeniden düzenliyorlar. Zaten C ve C++ dillerinin bu kadar
+C ve C++ derleyicileri optimizing compilers'dır. Yani kod yeniden düzenleniyor. Zaten C ve C++ dillerinin bu kadar
 verimli olmasındaki temel faktör optimizing compiler olmasıdır. Derleyicinin etkin bir optimizasyon yapabilmesi için sizin kodunuzda
 tanımsız davranış olmadığını temin etmeniz gerekiyor. Derleyici tarafından Undefined behavior'un olup olmadığını kontrol etmek karmaşık ve optimizasyon işlemini
 uzatan bir durumdur. Siz undefined behavior'un olmadığını temin ettiğinizde bu karmaşık işlemlerden uzak bir optimizasyon yapılıyor ve bu da programınızın
@@ -702,9 +702,9 @@ daha sonra yapılacağı anlamına gelmez. Burada hangi fonksiyonun daha önce �
 	const char* p2 = "aytun";
 
 	if (p1 == p2)
-		std::cout << "dogru char" << std::endl;
+		std::cout << "dogru" << std::endl;
 	else
-		std::cout << "yanlis char" << std::endl;
+		std::cout << "yanlis" << std::endl;
 ```
 Yukarıdaki kod parçacığında if'in doğru kısmına girer mi girmez mi konusu unspecified behavior'dur. Bunun sebebi derleyicinin nasıl bir kod optimizasyonu yapacağını
 bilemiyoruz. Yani derleyici "aytun" olan const char* sabitini ikinci kez gördüğünde bu bilgi ömrü boyunca değişmeyeceği için ve hali hazırda bu bilgiyi bir
@@ -723,9 +723,9 @@ behavior yoktur. Aşağıdaki iki farklı const char dizi tanımlanmıştır.
 	const char b[6] = "aytun";
 
 	if (a == b)
-		std::cout << "dogru dizi" << std::endl;
+		std::cout << "dogru" << std::endl;
 	else
-		std::cout << "yanlis dizi" << std::endl;
+		std::cout << "yanlis" << std::endl;
 ```
 
 
@@ -735,7 +735,7 @@ Mesela int türünün storage ihtiyacı 2, 4, 8 byte olabilir. Bu derleyiciye ba
 
 
 - C'nin standart kütüphanesi C++'ın standart kütüphanesinin bir bileşenidir. C++'da C'nin standart kütüphanelerini include ederken
-başına c harfi ekleni ve .h kısmı yazılmaz.
+başına c harfi eklenir ve .h kısmı yazılmaz.
 ```
 #include <stdio.h> // C'de
 #include <cstdio> // C++'da
@@ -791,7 +791,7 @@ int a3[4]{};
 # Referance Semantiği (references)
 
 - C'de sadece pointer semantiği var iken C++'da pointer semantiğine alternatif olarak reference semantiği vardır.
-C++'da reference semantiğine ihtiyaç uyulmasının sebebi; pointerlar C++'ın bazı araçları ile iyi bir uyum sağlamıyor.
+C++'da reference semantiğine ihtiyaç duyulmasının sebebi; pointerlar C++'ın bazı araçları ile iyi bir uyum sağlamıyor.
 Yani öyle araçlar var ki orada pointerın kullanılması o aracın implementasyonunu zorlaştırıyor. Dilin kuralları arasında uyum sağlanmıyor.
 Bunun en başında operator overloading dediğimiz konu başlığı geliyor. Eğer sadece pointer semantiği kullanılsaydı, operatör overloading
 özelliği tamamen legal bir şekilde implemente edilemezdi.
@@ -802,8 +802,6 @@ aslında bir fark olmadığı görülür.
 - Modern C++'da reference semantiği denildiğinde 3 ayrı reference kategorisi vardır.
 	- L value reference (sol taraf reference)
         - R value reference (sağ taraf reference)
-          		- move semantic
-          		- perferct forwarding (generic programming ile alakalı)
         - Forwarding reference (universal reference)
   
 
@@ -862,8 +860,9 @@ int main()
 }
 ```
 
-- Bir reference'ı tanımlıyoruz ve bir nesnenin yerine geçmesini sağlıyoruz. Yani reference olan tanımlanan ismi, tanımladığımız nesneye bağlamış oluyoruz.
+- Bir reference'ı tanımlıyoruz ve bir nesnenin yerine geçmesini sağlıyoruz. Yani reference olarak tanımlanan ismi, tanımladığımız nesneye bağlamış oluyoruz.
 Bu duruma teknik ingilizce olarak "bind" denir.
+
 !!! reference'lar rebind edilemezler. Yani ömürleri boyunca sadece tek bir nesneyi gösterirler.
 
 - Pointerlarda bir pointer başka bir pointer'ın adresini gösterebilir. (pointer to pointer) Ancak referance başka bir referance'ı gösteremez, eğer öyle tanımlanırsa
@@ -1031,7 +1030,7 @@ Ancak C++ için konuşuluyorsa x değerinin değişme olasılığı vardır. fun
 ```
 
 
-- Reference semantiğine göre bir reference'i tanımlarken ilk değer veren ifade bir değişken ismi olmak zorunda değildir. Bir L value expressiion olmak zorundadır.
+- Reference semantiğine göre bir reference'i tanımlarken ilk değer veren ifade bir değişken ismi olmak zorunda değildir. Bir L value expression olmak zorundadır.
 ```
 #include <iostream>
 
