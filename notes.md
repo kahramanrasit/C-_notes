@@ -1277,6 +1277,408 @@ int main()
 }
 ```
 
+- auto'da const kullanımı aşağıdaki gibidir:
+```
+const auto x = 10; // x'in türü const int olur. 
+```
+
+- auto, static anahtar sözcüğü ile de kullanılıyor.
+```
+#include <iostream>
+
+int main()
+{
+	for (int i = 0; i < 10; ++i)
+	{
+		static auto x = 5; //türü static int oluyor.
+		std::cout << x++ << "\n";
+	}
+}
+```
+
+Reference collapsing: Aslında C++ dilinin kurallarında reference to reference yoktur. Fakat öyle bağlamlar var ki reference to reference oluşturuyor.
+Reference to reference oluştuğunda dilin reference collapsing denilen kuralları devreye giriyor. Aslında reference to reference olması gereken türün yerine ya 
+L value reference türü ya da R value reference türü kullanılıyor. Ama R value mu L value reference olduğu aşağıdaki kurallara göre belirleniyor.
+```
+T&  ile &&   --- >   T&
+T&& ile &    --- >   T&
+T&  ile &    --- >   T&
+T&& ile &&   --- >   T&& 
+```
+
+Örnek olarak;
+```
+#include <iostream>
+
+int main()
+{
+	int x = 10;
+	auto&& r1 = 20; //r1'in türü int&&
+	auto&& r2 = x; //r2'nin türü int& --> reference collapsing oluştu. 
+	// yukarıda r2 için auto kısmında && kullanıldı, r2'ye x ataması yaparak int& türü elde edildi. 
+	//reference collapsing kurallarına göre de int& oldu.
+}
+```
+
+Bir örnek:
+```
+#include <iostream>
+
+using mytype = int&&;
+
+int main()
+{
+	int y = 5;
+	mytype&& x = 10; // burada x'in türü ref collapsing kuralına göre int&&
+	mytype& z = y; // burada z'nin türü int& olur.
+}
+```
+
+
+decltype: Bir anahtar sözcüktür. Böyle anahtar sözcüklere specifier da deniyor. Ancak decltype'a bir operatör de denebilir.
+
+Derleyici decltype'ı bir tür bilgisi olarak görüyor. Yani ortada bir decltype kullanımı var ise burada bir tür bilgisi vardır. int, double vs gibi.
+decltype ile elde edilen türü, tür kullanabileceğiniz herhangi bir yerde kullanabilirsiniz. Yani bu değişken tanımıyla sınırlı değildir. 
+
+Yani auto ile farkı incelenirse;
+- auto için bir değişken tanımlanmak zorundadır. Ancak ilk değerden hareketle tür çıkarımı yapılıyor.
+- decltype için bir  değişken tanımlamanıza gerek yoktur. decltype ile elde edilen tür örneğin bir fonksiyonun parametre değişkeninin
+türü, bir fonksiyonun geri dönüş değeri türü olabilir.
+
+decltype'ın iki farklı kural seti vardır.
+- decltype'ın operantının bir değişken olmasına göre,
+- decltype'ın operantının bir expression olmasına göre.
+
+ilk olarak decltype'ın operantının bir değişken olduğu kural setine göre örnekler:
+
+```
+#include <iostream>
+
+int main()
+{
+	int x = 1;
+	decltype(x) y; // int y demek ile aynı anlama gelir.
+}
+```
+=======
+```
+#include <iostream>
+
+int x = 1;
+using mytype = decltype(x); // bu şekilde kullanılabilir sentaks hatası yoktur.
+
+int main()
+{
+	//code
+}
+```
+=======
+```
+#include <iostream>
+
+int x = 1;
+decltype(x) foo();
+
+int main()
+{
+	//code
+}
+```
+=======
+```
+#include <iostream>
+
+int main()
+{
+	const int x = 1;
+	decltype(x) y = 56; // y'nin türü const int olur.
+
+}
+```
+=======
+```
+#include <iostream>
+
+int main()
+{
+	int x{};
+	auto& r = x;
+
+	decltype(r); // r'nin türü int& olur.
+}
+```
+=======
+```
+#include <iostream>
+
+int main()
+{
+	int x{};
+	const auto& r1 = x;
+	decltype(r1) r2; // r2'nin türü const int& olur. 
+	// ama yukarıda sentaks hatası olur çünkü r2 hem const yani salt okuma amaclı hem de ref aldığı bir değer yok!
+
+}
+```
+=======
+```
+#include <iostream>
+
+struct Nec { int a; };
+
+int main()
+{
+	Nec mynec{};
+	decltype(mynec.a) n; // burada n'nin türü int olur.
+}
+```
+
+- decltype'ın bir expression formunda olduğunda, hangi türün elde edileceği, expression ifadesinin primary value kategorisine göre belirlenir.
+```
+	expr    -->     tür
+
+        PR value  	T
+	L value 	T&
+	X value 	T&&
+```
+Örnekler:
+
+```
+decltype(10) x; // x'in türü int olur.
+```
+========
+```
+#include <iostream>
+
+
+int main()
+{
+	int x = 10;
+	int* ptr = &x;
+
+	decltype(*ptr); // L value olduğu için buranın türü int& olur.
+}
+```
+========
+```
+#include <iostream>
+
+
+int main()
+{
+	int x = 10;
+
+	decltype(x) y = 10; // x bir identifier olduğu için direk x'in türü kullanılır.
+	decltype((x)) r = y; // (x) bir expression olduğu ve L value olduğu için burada tür int& olur.
+}
+```
+========
+```
+#include <iostream>
+
+
+int main()
+{
+	int x = 5;
+
+	decltype(x++) y = 10; // x++ bir R value değerdir. tür int olur.
+	decltype(++x) r = y; // ++x bir L value değerdir. tür int& olur.
+}
+```
+=========
+```
+#include <iostream>
+
+int main()
+{
+	int a[5]{};
+	decltype(a) b; // a bir identifier olduğu için türü int[5]olur. array-decay uygulanmaz.
+	decltype(a[0]) c; // burada bir expression kullanılmıştır ve L value. tür int& olur.
+}
+```
+=========
+```
+#include <iostream>
+
+int f1();
+int& f2();
+int&& f3();
+
+int main()
+{
+	//f1() PR value
+	//f2() L value
+	//f3() X value
+
+	decltype(f1()) x = 5; // int
+	decltype(f2()) y = x; // int&
+	decltype(f3()) z = 5; // int&&
+}
+```
+
+Uyarı: decltype'da unevaluated context vardır.
+```
+#include <iostream>
+
+
+int main()
+{
+	int x = 10;
+
+	decltype(x++) a = 10;
+	decltype(++x) y = a;
+
+	std::cout << "x = " << x << "\n"; // x'in değeri 10 dur değişmez.
+}
+```
+===========
+```
+#include <iostream>
+
+
+int main()
+{
+	int* p{ nullptr };
+	int y{};
+	int a[10]{};
+
+	decltype(*p) x = y; // normalde null pointer'ı dereference etmek normalde ub iken burada değildir.
+	decltype(a[30]); // dizinin sınırı dışında bir değere erişmek normalde ub iken burada değildir. 
+	// çünkü decltype'da unevaluated context vardır.
+}
+```
+
+# Fonksiyonların Varsayılan Argüman Alması
+
+argüman: fonksiyon çağrısında kullanılan ifadeye deniyor.
+parametre: fonksiyon parametre değişkenine verilen isimdir.
+
+default argüman: Bir fonksiyona argüman gönderilmediğinde kullanılan değerdir. Fonksiyon bildirilirken veya fonksiyon tanımlanırken belirtilmek zorundadır.
+
+Bir fonksiyonun varsayılan argüman alması ya da birden fazla parametreye açıkca değer gönderilmemesini mümkün kılar. Varsayılan argüman tipik olarak fonksiyonun bildiriminde belirtilir.
+Ama öyle durumlar vardır ki bazen fonksiyonların bildirimi ayrıca yoktur. Sadece fonksiyonun tanımı vardır. Örneğin inline function. Dolayısıyla fonksiyonun tanımında da kullanılabilir.
+Ama derleyici hem fonksiyonun bildirimini hem de tanımını görüyorsa o zaman her ikisinde de varsayılan argümanın gösterilmesi bir sentaks hatasıdır. 
+```
+void func(int, int, int = 10);
+void func2(int x, int y, int z = 5);
+```
+Yukarıdaki fonksiyonun anlamı 3. parametresine argüman gönderilmez ise 3. parametreye 10 değeri gönderildiği kabul edilir. 
+
+Kural: Eğer fonksiyonun bir parametresi varsayılan argüman almışsa onun sağındaki tüm parametrelerinde varsayılan argüman alması gerekiyor. Varsayılan argümanlar son parametre
+değişkenleri için geçerlidir.
+```
+void f1(int, int = 3, int) // sentaks hatası olur.
+```
+Varsayılan argüman olarak pointer da kullanılabilir:
+```
+void func(int* ptr = nullptr);
+```
+
+Bir örnek: 
+```
+#include <iostream>
+
+int g = 20; 
+
+void func(int x = g++);
+
+int main()
+{
+	func();
+	func();
+	func();
+
+	std::cout << "g = " << g << "\n";
+}
+
+void func(int x)
+{
+	std::cout << "x = " << x << "\n";
+}
+```
+
+Başka bir modulden edinilen bildirime, varsayılan argüman eklenebilir.
+
+aşağıda emrah.h adında bir modul olsun. 
+```
+void func(int, int, int);
+```
+aşağıda redeclaration kullanımı gösterilmiştir.
+```
+#include <iostream>
+
+#include <emrah.h>
+
+void func(int, int, int = 10); // redeclaration yapılmıştır.
+
+int main()
+{
+	func(1, 5); // func(1, 5, 10) şeklinde çağırılmış olur.
+}
+```
+
+Eğer bir fonksiyon bir modulde sadece son parametresi default arguman geçilmişse ve programcı bir önceki parametreyi de default arguman yapmak istiyorsa;
+
+```
+//emrah.h
+void fund(int, int, int = 10);
+```
+
+```
+#include <iostream>
+
+#include <emrah.h>
+
+void func(int, int = 20, int); // redeclaration yapılmıştır.
+
+int main()
+{
+	func(1);.//func(1, 20, 10) şeklinde çağırılmış olur.
+}
+```
+
+Uyarı: daha önceki parametreler varsayılan arguman olan ifadelerde yer alamaz.
+```
+void func(int x, int y = x); // sentaks hatasıdır.
+```
+
+Bir örnek: 
+```
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <iostream>
+#include <ctime>
+
+void process_date(int day = -1, int mon = -1, int year = -1)
+{
+	if (year == -1) {
+		std::time_t timer;
+		std::time(&timer);
+		auto tp = std::localtime(&timer);
+		year = tp->tm_year + 1900;
+		if (mon == -1) {
+			mon = tp->tm_mon + 1;
+			if (day == -1)
+				day = tp->tm_mday;
+		}
+	}
+
+	std::cout << day << '/' << mon << '/' << year << "\n";
+}
+
+
+int main()
+{
+	process_date(10, 5, 1993);
+	process_date(10, 5);
+	process_date(10);
+	process_date();
+}
+```
+
+
+
+
 
 
 
