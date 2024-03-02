@@ -1677,42 +1677,514 @@ int main()
 ```
 
 
+# Kapsamlandırılmış Numaralandırma (enumaration) Türleri
+
+scoped enum / enum class
+
+```
+enum class Color {
+	white, 
+	gray,
+	black, 
+	green
+};
+```
+İstenirse underlying type belirlenebilir.
+```
+enum class Color :unsigned char {
+	white,
+	gray,
+	black,
+	green
+};
+```
+- enum class, normal enum kapsamında (scope)'unda değildir. enum class ayrı bir kapsama sahiptir. Bu sabitleri kullanabilmek için
+sınıflardaki gibi scope resolution operatörü aşağıdaki gibi kullanılmalıdır.
+```
+#include <iostream>
+
+enum class Color  {
+	white,
+	gray,
+	black,
+	green
+};
+
+int main() 
+{
+	Color myColor = Color::white;
+	auto c1 = Color::gray;
+}
+```
+- enum class'lardan aritmetik türlere örtülü(implicit) dönüşüm yoktur.
+```
+enum class Color  {
+	white,
+	gray,
+	black,
+	green
+};
+
+int main() 
+{
+	int x;
+	Color c{ Color::black };
+	x = c;//sentaks hatası
+}
+```
+- C++ 20 için using enum declaration özelliği geldi.
+```
+#include <iostream>
 
 
+enum class Color  {
+	white,
+	gray,
+	black,
+	green
+};
+
+void func()
+{
+    using enum Color; // Color enum class'ın tamamı using ile declare edildi.
+    auto c1 = white; // geçerli
+}
+void func1()
+{
+    using enum Color::gray; // Color enum class'dan sadece gray declare edildi.
+    auto c2 = green;// geçersiz.
+}
+
+```
+
+# C++'da tür dönüştürme operatörleri
+
+C++'da tür dönüştürme operatörleri ayrıca anahtar sözcüklerdir(keywords).
+- static_cast
+- const_cast
+- reinterpret_cast
+- dynamic_cast
+
+static_cast: TAm sayı, gerçek sayı türleri arasındaki dönüşümleri ve enum türleriyle, tam sayı türleri arasındaki dönüşümleri static cast operatörü ile
+yapılır. Farklı enum türleri arasındaki dönüşümü, void* türünden int*, double* gibi türe yapılan dönüşümde de static_cast kullanılır.
+
+const_cast: C'de const cast'e dair bir hatırlatma:
+```
+	int x = 10;
+	const int* ptr = &x;
+	int* p = (int*)ptr; (const cast);
+```
+const cast; const T* türünden T* türüne veya T* türünden const T* türüne yapılan dönüşümlerdir.
+reinterpret_cast: Bir nesneyi başka bir türden nesneymiş gibi kullanılan senaryolarda kullanılır. 
+dynamic_cast: inheritence ile alakalıdır.
+
+static_cast için örnek:
+```
+#include <iostream>
+
+enum class Pos { off, on, hold };
+
+int main() 
+{
+	int x = 10;
+	int y = 3;
+	Pos mypos;
+
+	double dval = static_cast<double>(x) / y;
+	int ival = static_cast<int>(dval);
+	ival = static_cast<int>(mypos);
+}
+```
+
+const_cast için bir örnek:
+```
+char* mystrchr(const char* p, int c)
+{
+	while (*p) {
+		if (*p == c) {
+			return const_cast<char*>(p);
+		}
+		++p;
+	}
+	if (*p == '\0')
+		return const_cast<char*>(p);
+
+	return nullptr;
+}
+```
+reinterpret_cast için bir örnek:
+```
+	double dval = 4.56;
+	char* p = reinterpret_cast<char*>(&dval);
+```
+====
+```
+const unsigned int uval{ 436 };
+
+	int* p1 = const_cast<int*>(reinterpret_cast<const int*>(&uval));
+	int* p2 = reinterpret_cast<int*>(const_cast<unsigned int*>(&uval));
+```
+
+# Function overloading (Fonksiyonun Aşırı Yüklenmesi)
+- Özünde abstraction(soyutlama) yapıldığında aynı işi gerçekleştiren fonksiyonların kodları (implementasyonları) farklı olsa da aynı ismi alabilmelerine yönelik özelliktir.
+Yani fonksiyonların kodları farklı ama isimleri aynıdır.
+
+Mesela bir değeri yazıya dönüştüren n tane fonksiyonun isminin 'tostring' olması gibi. int'i yazıya dönüştüren fonksiyonun kodu ayrı, double'ı yazıya dönüştüren fonksiyonun
+kodu ayrı ama bu iki fonksiyonun ismi aynıdır.
+
+- Funcion overloading mekanizması derleme (build time) zamanına yönelik bir mekanizmadır. Run-time'a ait değildir.
+
+static binding(early binding): Eğer fonksiyon çağrısı derleme zamanında bir fonksiyonla bağlanıyorsa programlamada buna static binding denir.
+
+dynamic binding(late binding): Hangi fonksiyonun çağırıldığı, programın çalışma zamanında anlaşılıyorsa buna dynamic binding denir.
+
+Funcion overload resolution: Bir fonksiyon çağırsı yapıldığında ve ortada function overloading varsa hangi fonksiyonun çağırılacağını belirleyen kurallar bütünüdür.
+
+Function overloading oluşması için;
+- İki ya da daha fazla fonksiyonun aynı isimde olması gerekli.
+- Kapsamları, scope'ları aynı olmalıdır.
+- function signature'ları farklı olmalıdır.
+
+C++'da bir identifier'ın aşağıdaki scope'lardan birine sahip olabilir.
+- namespace scope
+- class scope
+- block scope
+- function prototype scope
+- function scope
+
+Örneğin iki aynı isimli fonksiyon, biri class scope'da iken diğeri block scope'da ise overloading olma ihtimali yoktur çünkü scope'lar farklıdır.
+
+Eğer aynı isimli fonksiyonlar farklı scope'larda ise "name hiding, name shadowing" olur. Aynı isimler kullanıldığı için birbirini gizleyebilirler.
+
+- Function signature: Fonksiyon imzası, fonksiyonun parametre değişkenlerinin sayısı ve türü ile alakalıdır. Geri dönüş değeri function signature'a dahil değildir.
+
+```
+func(int, double);
+func(double, int); // fonksiyon imzaları farklıdır.
+
+int foo(int, int);
+double func(int, int); // imzaları aynı, fonksiyon isimleri farklıdır.
+```
+
+- İki fonksiyonun isimleri ve imzaları aynı, geri dönüş değerleri farklı olarak bildirilirse bu dilin sentaksına aykırı olur. Ayrıca overloading de olmaz.
+```
+int foo(int);
+double foo(int); // sentaks hatası
 
 
+int foo(int);
+double foo(int, int); // overloading olur.
+//scope'lar aynı
+//fonksiyon isimleri aynı
+//imzaları farklı
+```
+
+- Default argument için aşağıdaki durumda
+```
+int foo(int);
+int foo(int, int = 0); // overloading olur.
+```
+fonksiyonların parametre değişken sayısı farklı, dolayısıyla overloading vardır.
+
+- Parametrelerin kendisinin const olması bir imza farklılığı olarak kabul edilmez. (adres-pointer olmadığı sürece)
+```
+int foo(int);
+int foo(const int); // bu bir redeclaration'dur. function overloading oluşturmaz.
+
+int foo(int*);
+int foo(const int*); // const overloading olarak özel bir ismi vardır.
+```
+Ancak const overloading yalnızca low-level const için geçerlidir.
+```
+void f(double* const p);
+void f(double* p); // function redeclaration olur. Function overloading olmaz.
+```
+
+- Bir türe ait onu temsil eden bir eş isim oluşturmak (type alias) kesinlikle farklı bir tür anlamına gelmez.
+```
+typedef double flt_type;
+
+void f(double);
+void f(flt_type); // function overloading değildir. Redeclaration olur.
+```
+
+- char, signed char ve unsigned char türleri distinct(ayrı) olarak derleyici tarafından değerlendirilir.
+```
+void f(char);
+void f(signed char);
+void f(unsigned char); // burada 3 tane overloading vardır.
+```
+
+- pointer türleri farklı tür olarak değerlendirilir.
+```
+void f(int*);
+void f(int**);
+void f(int***); // 3 tane overload vardır.
+```
+===
+```
+void f(int&);
+void f(int&&); // overloading olur.
+```
+===
+```
+#include <iostream>
+#include <cstdint>
+
+void f(std::int32_t); 
+void f(int); // implementation define'dır
+```
+===
+```
+#include <iostream>
+#include <cstdint>
+
+void f(std::int32_t); 
+void f(std::int16_t); 
+```
+===
+```
+void f(int);
+void f(int*); // overload olur.
+```
+===
+```
+void f(int);
+void f(int&); // overload olur.
+```
+
+Bir fonksiyonun bildiriminde dizi notasyonu ([]) kullanılırsa, derleyici; fonksiyonu parametresi 
+dizi olmayacağı için burda array_decay uygular ve fonksiyon parametresi pointer demektir.
+```
+void foo(int p[]);
+void foo(int p[20]);
+void foo(int* p); // parametrelerin hepsi int* türündendir.
+// redeclaration olur.
+```
+
+===
+```
+int(int) -> function type
+int (*)(int) -> function pointer type 
+```
+
+- Fonksiyonların geri dönüş değeri ve parametre türü dizi ve fonksiyon türü olamaz. Dizi veya fonksiyon türü yapıldığında pointer haline dönüştürülür.
+```
+void foo(int(int));
+void foo(int(*)(int)); // redeclaration olur
+// derleyici function type'ı decay ederek function pointer olarak görür.
+```
+
+```
+void foo(int (*)[5]);
+void foo(int (*)[6]); // overloading vardır. 
+```
+
+# Function Overload Resolution
+
+Overload resolution, derleyici tarafından 3 kademeli bir şekilde ele alınıyor.
+- Birinci aşamada derleyici fonksiyon çağrısının yapıldığı noktada fonksiyona gönderilen argüman ya da argümanlara bakmaksızın bu noktada visible
+olan bütün fonksiyonları kayda alır. Bu fonksiyonlara candidate function denir.
+- İkinci aşamada derleyici aday fonksiyonların her biri için fonksiyon çağrısındaki argümanlarla çağırılması legal olur muydu değerlendirilmesi yapılıyor.
+Legal olan fonksiyonlara "viable function" denir.
+
+Fonksiyon çağrısındaki argüman sayısı ile fonksiyonun parametre sayısı arasında uyumsuzluk varsa (variadic fonksiyonlar ve varsayılan argüman mekanizması hariç)
+viable olma ihtimali yoktur.
+
+Bunun dışında fonksiyon çağırısnda kullanılan argümandan, ilgili parametre değişkenine dilin kurallarınca izin verilen bir conversion olması gerekir. (implicit)
+
+- Örneklerle legal olan, olmayan tür dönüşümlerini function call üzerinden hatırlayalım.
+```
+#include <iostream>
+
+void func(double*);
+
+int main() 
+{
+	func(2); // viable değil
+}
+```
+===
+```
+#include <iostream>
+
+void func(double*);
+
+int main() 
+{
+	func(0); // viable olur. Çünkü null pointer to conversion vardır.
+}
+
+```
+===
+```
+#include <iostream>
+
+void func(double*);
+
+int main() 
+{
+	func(nullptr);// nullptr_t türünden pointer türlere implicit dönüşüm vardır. 
+}
+```
+====
+```
+#include <iostream>
+
+void func(int);
+
+int main() 
+{
+	func(nullptr);//nullptr_t türünden tam sayı türlerine implicit type conversion yoktur. 
+}
+```
+
+===
+```
+#include <iostream>
+
+void func(bool);
+
+int main() 
+{
+	int x{};
+	func(nullptr); // nullptr_t türünden bool türüne dönüşüm yoktur. 
+	func(&x); // unutulmamalıdır ki adres türlerinden bool türüne implicit dönüşüm vardır.
+}
+```
+===
+```
+#include <iostream>
+
+void func(void*);
+
+int main() 
+{
+	int x{};
+	double f{};
+
+	func(&x); // geçerli
+	func(&f); // geçerlidir. Pointer türlerden void* türüne implicit dönüşüm var.
+}
+```
+===
+- Önemli bir not: pointer türlerden void* türüne implicit dönüşüm vardır ancak void* türünden pointer türlere örtülü dönüşüm yoktur.
+T* -> void* ---------- legal
+void* -> T* ---------- illegal
+```
+#include <iostream>
+
+void func(int*);
+
+int main() 
+{
+	int x{};
+	double f{};
+	void* vp{};
+
+	func(&x); // viable olur.
+	func(&f); // geçerli değil
+	func(vp); // void* türünden pointer türlerine dönüşüm yoktur. (c'de vardı malloc fonksiyonu hatırlanmalı)
+}
+```
+===
+```
+#include <iostream>
+
+void f1(int*);
+void f2(const int*);
+
+int main() 
+{
+	const int x = 10;
+	int y = 20;
+	f1(&x); // const int* dan int* a implicit dönüşüm yoktur.
+	f2(&y); // int* dan const int* a implicit dönüşüm vardır.
+}
+```
+===
+```
+#include <iostream>
+
+void func(char*);
+
+int main() 
+{
+	func("const char*"); // const char* dan char* a dönüşüm geçersizdir.
+}
+```
+
+Aritmetik türlerden enum türleine dönüşüm geçersizdir.
+```
+#include <iostream>
+
+enum pos { on, off, hold };
+enum class color { yellow, dark_blue };
+
+void f(pos);
+void g(color);
+
+int main() 
+{
+	f(1); //geçersizdir
+	g(1); //geçersizdir
+	f(color::yellow); //geçersizdir
+	g(off); //geçersizdir
+}
+```
+enum türlerden aritmetik türlere implicit dönüşüm geçerli iken enum class türlerinden aritmetik türlere dönüşüm geçerli değildir.
+```
+#include <iostream>
+
+enum pos { on, off, hold };
+enum class color { yellow, dark_blue };
+
+void f(int);
+
+int main() 
+{
+	f(off); // geçerlidir. 
+	f(color::yellow); // geçersizdir
+}
+```
+
+===
+```
+#include <iostream>
+
+void f1(int*);
+void f2(const int*);
+void f3(void*);
+void f4(bool); // pointer türlerden bool türüne dönüşüm vardır (nullptr_t türü hariç)
+
+int main() 
+{
+	int x = 5;
+
+	f1(&x); // legal
+	f2(&x); // legal
+	f3(&x); // legal
+	f4(&x); // legal
+}
+```
 
 
+int*& türüne sadece L value atama yapılabilir. &x ifadesi PR value bir ifadedir.
+```
+#include <iostream>
 
+void f(int*&);
 
+int main() 
+{
+	int x = 10;
+	f(&x); //geçersizdir.
+}
+```
+===
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
