@@ -2181,10 +2181,520 @@ int main()
 	f(&x); //geçersizdir.
 }
 ```
-===
+
+Birden fazla overload olduğunda bu isimle yapılan bir çağrının geçerli olma garanti yoktur. İki nedenle yapılan çağrı geçersiz olabilir.
+- no match (overload olan fonksiyonların viable olmama durumu)
+- ambiguity (overload olan fonksiyonların viable ve sentaks olarak birbirine eşit olduğu için belirsizlik oluşması)
+
+no match için bir örnek:
+```
+#include <iostream>
+
+void f(int*);
+void f(int, int);
+void f(int);
+void f(double);
+
+int main() 
+{
+	double d{};
+	f(); // no match çünkü fonksiyon parametresi olmayan bir fonksiyon yoktur.
+	f(&d); // no match çünkü double* türünden parametresi olan e legal olarak dönüşüm yapılabilecek fonksiyon yoktur.
+
+}
 ```
 
+ambiguity durumu için bir örnek:
 ```
+#include <iostream>
+
+void f(int);
+void f(double);
+
+int main() 
+{
+	f(2u); // ambiguity olur çünkü iki fonksiyon parametresine de implicit dönüşüm legaldir.
+}
+```
+
+
+İki ya da daha fazla viable fonksiyon olması durumunda derleyici ya bu fonksiyonlardan birini seçer, seçilen fonksiyona best viable (best match) denir. 
+Ya da bu fonksiyonlardan biri diğerinden daha iyi bir seçim yapılamadığı için ambiguity hatası oluşur.
+
+Argümandan parametre değişkenine aktarım legal olduğuna göre uygun bir dönüşüm vardır. Dilin kuralları argümandan parametre değişkenine yapılan bu legal dönüşümü 
+kategorize ediyor. Bu kategorileri birbirine göre üstün ya da daha az üstün kılıyor.
+
+- Üstünlüğü en az dönüşüm 'variadic conversion' dır.
+```
+#include <iostream>
+
+void func(int, ...);
+
+int main() 
+{
+	func(1, 1.2); // burada ikinci parametre olan değer 1.2'dir ve variadic conversion oluşur.
+}
+```
+Yani derleyicinin compile time'da variadic parametreye gönderilen argümanın türünün ne olduğunu kontrol etme yükümlülüğü yoktur. Hangi değer gönderilirse gönderilsin
+doğru olur denemez ancak legal olur. Bu dönüşüme variadic conversion denir.
+
+
+- Öncelik sıralamasına göre variadic conversion'un bir üstünde 'user-defined conversion yer alır.
+
+User-defined conversion: Dilin kurallarına göre bir  türden diğer bir türe dönüşüm yoktur. Örneğin struct data bir class türü ise
+int türünden struct data türüne dönüşüm yoktur. Ya da farklı sınıflar arasında tür dönüşümü yoktur. Ama programcı uygun bir fonksiyon bildirdiğinde dilin kurallarına göre
+derleyici o fonksiyonu çağırarak bir dönüşüm gerçekleştiriyor. Yani normalde olmayan bir tür dönüşümü programcının bildirdiği bir fonksiyon sayesinde legal hale geliyor. Eğer
+dönüşüm bu şekilde ise normalde sentaks hatası iken artık progragramcı olarak bir fonksiyon bildirildiği için dilin kuralları gereği o fonksiyona çağrı yapılarak derleyici bu dönüşümü gerçekleştirebildiği
+için o dönüşüm var ise böyle dönüşümlere user-defined type conversion denir. 
+
+- Öncelik sıralamasının bir kademe üzerinde 'standard conversion' yer alır. Yani dilin kurallarına göre legal olan dönüşümlerdir. (int'den double'a gibi)
+
+Peki birden fazla standard conversion olan viable fonksiyon olursa; derleyici açısından 3 alt kategoride değerlendirilir.
+- exact match (tam uyum)
+- promotion (integral promotion veya float to double promotion)
+- only conversion
+ 
+```
+#include <iostream>
+
+void f(long double);
+void f(char);
+
+int main() 
+{
+	f(3.4); // ambiguous call
+}
+```
+
+Exact match durumu olabilmesi için;
+- argüman ile parametre türünün aynı olması
+- T* türünden const T* türüne dönüşüm olması
+- Eğer conversion array decay veya fonksiyon decay oluyorsa
+
+```
+void f(int*);
+
+int main() 
+{
+	int a[] = { 3, 5, 7 };
+	f(a); // a'nın türü array decay'den dolayı int* olarak fonksiyona gönderilir.
+}
+```
+===
+```
+void f(int (*)(int));
+int bar(int);
+
+int main() 
+{
+	f(bar); // function to pointer conversion. 
+	//decay ile fonsiyonun ismi fonksiyonun adresine dönüştürülmüş olur.
+	// bar ismi int(int) iken decay ile int(*)(int) olur.
+}
+```
+
+promotion: 
+- integral promotion; int altı türlerin ifade içerisinde kullanılınca int'e yükseltilmesi.
+- float to double promotion(floating-point promotion)
+
+```
+#include <iostream>
+
+void f(double);
+void f(char);
+
+int main() 
+{
+	f(1.5f);//floating-point promotion
+}
+```
+===
+```
+#include <iostream>
+
+void f(int);
+void f(double);
+void f(long);
+
+int main() 
+{
+	f(3.4); // exact match for f(double);
+}
+```
+===
+```
+#include <iostream>
+
+void f(int);
+void f(double);
+void f(long);
+
+int main() 
+{
+	f(12u); // ambiguity olur. 3'ü de only conversion
+}
+```
+===
+```
+#include <iostream>
+
+void f(int);
+void f(double);
+void f(long);
+
+int main() 
+{
+	f(true); //integral promotion. bool to int
+}
+```
+===
+```
+#include <iostream>
+
+void f(int);
+void f(double);
+void f(long);
+
+int main() 
+{
+	f(2.3L);// long double'dır ve hepsine only conversion olur. Yani ambiguity.
+}
+```
+===
+```
+#include <iostream>
+
+void f(int);
+void f(double);
+void f(long);
+
+int main() 
+{
+	f('A');// integral promotion olur. f(int) çağırılır.
+}
+```
+
+Özel durumlar:
+
+const overloading: 
+```
+#include <iostream>
+
+void func(int*);
+void func(const int*);
+
+int main() 
+{
+	int x = 5;
+	const int y = 15;
+	f(&x); //func(int*) çağırılır.
+	f(&y);  // func(const int*) çağırılır.
+}
+```
+
+Default argument:
+```
+#include <iostream>
+
+void func(int x, int y = 0);
+void func(int x);
+
+int main() 
+{
+	func(12); // ambiguity olur.
+}
+```
+===
+```
+#include <iostream>
+
+void func(int& x);
+void func(int x);
+
+int main() 
+{
+	int ival{};
+	func(ival); // ambiguity
+	func(10); // 10 bir R value olduğu için int x olan fonksiyon çağırılır
+				// R value expression int& türü ile uyumsuzdur.
+}
+```
+===
+```
+#include <iostream>
+
+void func(const int& x);
+void func(int x);
+
+int main() 
+{
+	int ival{};
+	func(10); // ambiguity
+	// const int& türüne R value değer atanabiliyor. 
+}
+```
+
+nullptr'ın C++ diline eklenmesinin sebeplerinden birini açıklayabilen bir örnek:
+```
+#include <iostream>
+
+void func(double*)
+void func(int);
+
+int main() 
+{
+	func(0); // func(int) için exact match olur.
+	func(nullptr); // func(double*) için exact match olur.
+}
+```
+
+nullptr'ın türü nullptr_t'dir ve bu türden sadece pointer türlerine dönüşüm olur.
+```
+#include <iostream>
+
+void func(double*)
+void func(int*);
+
+int main() 
+{
+	func(nullptr); //ambiguity olur.
+}
+```
+
+
+
+- Burada bir istisna vardır. bool - void* overloadında nesne adresiyle çağrı yapıldığında slında her ikisi de viable ve her ikisi  de onvly conversion olmasına rağmen burada
+void*'a dönüşüm olur.
+```
+#include <iostream>
+
+void func(bool);
+void func(void*);
+
+int main() 
+{
+	int x{};
+	func(&x); //ambiguity yoktur. func(void*) çağırılır.
+}
+```
+===
+```
+#include <iostream>
+
+void func(int&); //viable değil
+void func(int&&); //viable
+
+int main() 
+{
+	func(10); //R value olduğu için func(int&&) çağırılır.
+}
+```
+===
+```
+#include <iostream>
+
+void func(int&); //viable 
+void func(int&&); //viable değil
+
+int main() 
+{
+	int x{};
+	func(x); //func(int&) çağırılır.
+}
+```
+===
+```
+#include <iostream>
+
+void func(const int&); //viable ama çağırılmaz
+void func(int&&); // viable ve çağırılır
+
+int main() 
+{
+	func(10); // Burada exact match func(int&&) ile sağlanır.
+	 // ancak unutulmamalıdır ki func(const int&) ile de only conversion durumu sağlanır.
+	//ambiguity olmaz!
+}
+
+```
+===
+```
+#include <iostream>
+
+void func(int&);
+void func(const int&);
+void func(int&&);
+
+int main() 
+{
+	int x = 10;
+	const int cx{ 45 };
+
+	func(10); // exact match den dolayı func(int&&) seçilir
+	func(x); // exact match den dolayı func(int&) seçilir. ama func(const int&) de viabledır.
+	func(cx); //exact match den dolayı func(const int&) seçilir. 
+	//const overloading.
+}
+
+```
+===
+```
+void bar(int& x)
+{
+	std::cout << "3 ";
+}
+void bar(int&& x)
+{
+	std::cout << "4 ";
+}
+void func(int& x)
+{
+	std::cout << "1 ";
+	bar(x);
+}
+void func(int&& x)
+{
+	std::cout << "2 ";
+	bar(x);
+}
+
+int main() 
+{
+	func(10); //ekran çıktısı "2 3" olur.
+}
+
+```
+
+- Önemli bir hatırlatma: tür eş ismi bir pointer'a karşılık geliyorsa ve bu tür eş ismi const ile birlikte kullanılıyorsa
+ifade her zaman top-level const olur.
+```
+#include <iostream>
+
+typedef int* iptr;
+
+int main() 
+{
+	int x = 10;
+	int y = 20;
+
+	const iptr p = &x; // p'nin türü int* const olur.
+	p = &y;// p top-level olduğu için geçersiz.
+	*p = 56; // p low-level const olmadığı için geçerlidir.
+}
+
+```
+
+Aşağıdaki örnekte int türünden bir x değerinin adresine bir referans bağlanmak istenirse üç farklı çözüm yolu gösterilmiştir.
+```
+#include <iostream>
+
+typedef int* iptr;
+
+int main() 
+{
+	int x = 10;
+	
+	int*&& r1 = &x;
+	int* const& r2 = &x;
+	const iptr& r3 = &x;
+}
+
+```
+
+
+
+
+Eğer fonksiyon overloading olan fonksiyonların birden daha fazla parametresi varsa;
+- en az bir parametre ile diğer fonksiyonlara üstün gelmeli ve diğer parametrelerde de daha az üstün olduğu bir durum olmamalı(aynı olabilir).
+```
+#include <iostream>
+
+void f(int, double, long); //1.function
+void f(char, int, double); //2. function
+void f(long, unsigned int, float); //3. function
+
+int main() 
+{
+	f(12, 4L, 1); // 1. fonksiyon çağırılır.
+	f(2.3, true, 12); // 2.fonksiyon çağırılır. integral promotion
+	f(34L, 3.5L, 12); // 3. fonksiyon çağırılır. 
+}
+
+```  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
