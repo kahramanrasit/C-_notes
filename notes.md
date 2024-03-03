@@ -1765,7 +1765,7 @@ C++'da tür dönüştürme operatörleri ayrıca anahtar sözcüklerdir(keywords
 - reinterpret_cast
 - dynamic_cast
 
-static_cast: TAm sayı, gerçek sayı türleri arasındaki dönüşümleri ve enum türleriyle, tam sayı türleri arasındaki dönüşümleri static cast operatörü ile
+static_cast: Tam sayı, gerçek sayı türleri arasındaki dönüşümleri ve enum türleriyle, tam sayı türleri arasındaki dönüşümleri static cast operatörü ile
 yapılır. Farklı enum türleri arasındaki dönüşümü, void* türünden int*, double* gibi türe yapılan dönüşümde de static_cast kullanılır.
 
 const_cast: C'de const cast'e dair bir hatırlatma:
@@ -1775,7 +1775,9 @@ const_cast: C'de const cast'e dair bir hatırlatma:
 	int* p = (int*)ptr; (const cast);
 ```
 const cast; const T* türünden T* türüne veya T* türünden const T* türüne yapılan dönüşümlerdir.
+
 reinterpret_cast: Bir nesneyi başka bir türden nesneymiş gibi kullanılan senaryolarda kullanılır. 
+
 dynamic_cast: inheritence ile alakalıdır.
 
 static_cast için örnek:
@@ -1838,14 +1840,14 @@ static binding(early binding): Eğer fonksiyon çağrısı derleme zamanında bi
 
 dynamic binding(late binding): Hangi fonksiyonun çağırıldığı, programın çalışma zamanında anlaşılıyorsa buna dynamic binding denir.
 
-Funcion overload resolution: Bir fonksiyon çağırsı yapıldığında ve ortada function overloading varsa hangi fonksiyonun çağırılacağını belirleyen kurallar bütünüdür.
+Funcion overload resolution: Bir fonksiyon çağrısı yapıldığında ve ortada function overloading varsa hangi fonksiyonun çağırılacağını belirleyen kurallar bütünüdür.
 
 Function overloading oluşması için;
 - İki ya da daha fazla fonksiyonun aynı isimde olması gerekli.
 - Kapsamları, scope'ları aynı olmalıdır.
 - function signature'ları farklı olmalıdır.
 
-C++'da bir identifier'ın aşağıdaki scope'lardan birine sahip olabilir.
+C++'da bir identifier aşağıdaki scope'lardan birine sahip olabilir.
 - namespace scope
 - class scope
 - block scope
@@ -1885,6 +1887,8 @@ int foo(int);
 int foo(int, int = 0); // overloading olur.
 ```
 fonksiyonların parametre değişken sayısı farklı, dolayısıyla overloading vardır.
+
+
 
 - Parametrelerin kendisinin const olması bir imza farklılığı olarak kabul edilmez. (adres-pointer olmadığı sürece)
 ```
@@ -1940,7 +1944,7 @@ void f(int); // implementation define'dır
 #include <cstdint>
 
 void f(std::int32_t); 
-void f(std::int16_t); 
+void f(std::int16_t); // overloading olur.
 ```
 ===
 ```
@@ -1991,7 +1995,7 @@ Legal olan fonksiyonlara "viable function" denir.
 Fonksiyon çağrısındaki argüman sayısı ile fonksiyonun parametre sayısı arasında uyumsuzluk varsa (variadic fonksiyonlar ve varsayılan argüman mekanizması hariç)
 viable olma ihtimali yoktur.
 
-Bunun dışında fonksiyon çağırısnda kullanılan argümandan, ilgili parametre değişkenine dilin kurallarınca izin verilen bir conversion olması gerekir. (implicit)
+Bunun dışında fonksiyon çağırısında kullanılan argümandan, ilgili parametre değişkenine dilin kurallarınca izin verilen bir conversion olması gerekir. (implicit)
 
 - Örneklerle legal olan, olmayan tür dönüşümlerini function call üzerinden hatırlayalım.
 ```
@@ -2069,8 +2073,11 @@ int main()
 ```
 ===
 - Önemli bir not: pointer türlerden void* türüne implicit dönüşüm vardır ancak void* türünden pointer türlere örtülü dönüşüm yoktur.
+```
 T* -> void* ---------- legal
 void* -> T* ---------- illegal
+```
+===
 ```
 #include <iostream>
 
@@ -2114,7 +2121,7 @@ int main()
 }
 ```
 
-Aritmetik türlerden enum türleine dönüşüm geçersizdir.
+Aritmetik türlerden enum türlerine dönüşüm geçersizdir.
 ```
 #include <iostream>
 
@@ -2182,7 +2189,7 @@ int main()
 }
 ```
 
-Birden fazla overload olduğunda bu isimle yapılan bir çağrının geçerli olma garanti yoktur. İki nedenle yapılan çağrı geçersiz olabilir.
+Birden fazla overload olduğunda bu isimle yapılan bir çağrının geçerli olma garantisi yoktur. İki nedenle yapılan çağrı geçersiz olabilir.
 - no match (overload olan fonksiyonların viable olmama durumu)
 - ambiguity (overload olan fonksiyonların viable ve sentaks olarak birbirine eşit olduğu için belirsizlik oluşması)
 
@@ -2244,7 +2251,7 @@ doğru olur denemez ancak legal olur. Bu dönüşüme variadic conversion denir.
 User-defined conversion: Dilin kurallarına göre bir  türden diğer bir türe dönüşüm yoktur. Örneğin struct data bir class türü ise
 int türünden struct data türüne dönüşüm yoktur. Ya da farklı sınıflar arasında tür dönüşümü yoktur. Ama programcı uygun bir fonksiyon bildirdiğinde dilin kurallarına göre
 derleyici o fonksiyonu çağırarak bir dönüşüm gerçekleştiriyor. Yani normalde olmayan bir tür dönüşümü programcının bildirdiği bir fonksiyon sayesinde legal hale geliyor. Eğer
-dönüşüm bu şekilde ise normalde sentaks hatası iken artık progragramcı olarak bir fonksiyon bildirildiği için dilin kuralları gereği o fonksiyona çağrı yapılarak derleyici bu dönüşümü gerçekleştirebildiği
+dönüşüm bu şekilde ise normalde sentaks hatası iken artık programcı olarak bir fonksiyon bildirildiği için dilin kuralları gereği o fonksiyona çağrı yapılarak derleyici bu dönüşümü gerçekleştirebildiği
 için o dönüşüm var ise böyle dönüşümlere user-defined type conversion denir. 
 
 - Öncelik sıralamasının bir kademe üzerinde 'standard conversion' yer alır. Yani dilin kurallarına göre legal olan dönüşümlerdir. (int'den double'a gibi)
@@ -2463,7 +2470,7 @@ int main()
 
 
 
-- Burada bir istisna vardır. bool - void* overloadında nesne adresiyle çağrı yapıldığında slında her ikisi de viable ve her ikisi  de onvly conversion olmasına rağmen burada
+- Burada bir istisna vardır. bool - void* overloadında nesne adresiyle çağrı yapıldığında aslında her ikisi de viable ve her ikisi  de only conversion olmasına rağmen burada
 void*'a dönüşüm olur.
 ```
 #include <iostream>
