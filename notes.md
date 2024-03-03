@@ -2630,10 +2630,42 @@ int main()
 ```  
 
 
+Bir çok C++ projesinde C kütüphaneleri de kullanılıyor. Yani C dilinin kurallarına göre yazılmış ve C derleyicisi tarafından derlenmiş fonksiyonları C++ kodundan çağırmak çok sık karşılaşılan bir durum.
 
+Bir örnek yaparak bu durumu açıklayalım.
 
+cnec.h isimli bir baslık dosyası 
+```
+int func(int);
+```
 
+cnec.c isimli kaynak dosya.
+```
+#include "cnec.h"
 
+int func(int x)
+{
+	return x * x + 1;
+}
+```
+
+cpp kaynak dosyası olarak da main.cpp dosyasında bu fonksiyon kullanılsın.
+main.cpp
+```
+#include <iostream>
+#include "cnec.h"
+
+int main()
+{
+	auto x = func(20);
+
+	std::cout << "x = " << x << "\n";
+}
+```
+
+Derlediğimizde bir hata görmeyiz ama build ettiğimizde linker hatası ile karşılaşırız.
+
+Hatanın nedeni: Hem C hem C++ için bir fonksiyon çağrısı yapıldığında 1:15 - 8
 
 
 
