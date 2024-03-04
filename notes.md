@@ -2665,10 +2665,55 @@ int main()
 
 Derlediğimizde bir hata görmeyiz ama build ettiğimizde linker hatası ile karşılaşırız.
 
-Hatanın nedeni: Hem C hem C++ için bir fonksiyon çağrısı yapıldığında 1:15 - 8
+Hatanın nedeni: Hem C hem C++ için bir fonksiyon çağrısı yapıldığında inline expansion(inline function) değilse yani derleyici bu kodun kaynak kodunu zaten görmüyorsa,
+Derleyici programın akışının fonksiyona geçmesini sağlayan fonksiyona giriş kodlarını ve fonksiyonun çalışması bittikten sonra programın akışının tekrar kaldığı yere dönmesini sağlayan
+fonksiyondan çıkış kodlarını üretiyor. Derleyici fonksiyon inline değilse, fonksiyonun kodunu bilmiyor, sadece bildirimine göre işlem yapıyor. Çağıran fonksiyonun objesiyle(derlenmiş haliyle)
+çağırılan fonksiyonun objesini birleştirmek linker'ın görevidir. bağlayıcı program link aşamasında yapılır. Derleyiciler linkerın fonksiyon çağrısındaki fonksiyonun objesiyle, bu çağıran kodun objesini 
+birleştirebilmesi için derleyiciler obje koda bir referans yazarlar linker'a yönelik, yani linker bu referans ile bağlama işlemini yapar. Linker ile compiler arasında bu isimlendirmenin ne şekilde 
+yapılacağı konusunda bir notasyon vardır. Derleyiciler bir nevi fonksiyonun ismini decore ederek referans oluşturuyorlar.
+- decorated / name mangling
 
+Derleyicilerin linker'a ithafen obje koda yazdığı bu isimlere external reference deniyor. Problem bu noktada başlıyor. C derleyicilerinin linker'a hitaben yazdığı external referece olarak
+kullanılacak olan ismin decorate edilmesi ile C++ derleyicilerinin linker'a hitaben oluşturduğu ismin decore edilmesi arasında ciddi bir farklılık vardır. Farklılığın nedeni; C'de function overloading 
+olmadığı için external fonksiyonlar aynı isimli bir tane olabileceği için C derleyicileri linker'a hitaben bu ismi oluştururken sadece fonksiyonun isminden faydalanıyorlar. Ancak C++'da 
+function overloading olduğu için aynı isimli fonksiyonları ayırt etmek için fonksiyonların parametrelerine dair de bir notasyon giriyor. 
 
+Yukarıdaki örnekdeki problem ise C++ derleyicisi çağırılan fonksiyonun C'de derlenmiş bir fonksiyon olduğunu bilmediği için linker'a yazdığı ismi C tarzı değil C++ tarzında decore etti. Fakat 
+sıra linker'a geldiğinde linker bu fonksiyon için decore edilmiş ismi aradı ve bulamadı. Çünkü linker C++'a göre decore edilmiş bir isim arıyor. Doğal olarak C'ye göre decore edilmiş bir 
+ismi tanıyamıyor. 
 
+Bu problemin çözümü için derleyiciye bu fonksiyonun bir C fonksiyonu olduğunu bildirmemiz gerek ve derleyici bu fonksiyona çağrı yapıldığında C'ye göre decore edebilsin. Derleyiciye
+bu bildirmeyi extern 'C' bildirimi denilir. Eğer fonksiyon bildiriminin başında (header dosyaya) extern "C" eklerseniz C++ derleyicisi bu bildirimi gördüğünde fonksiyonun artık C'de derlenmiş bir fonksiyon
+olduğunu anlar. Ancak unutulmamalıdır ki extern "C", C'de geçerli olmaz. Bu sebeple bir başlık dosyası hem C'de hem de C++'da derlenecek ise conditional compiling kullanılarak yapılabilir.
+
+predefined symbolic constants
+```
+__cplusplus makrosu C++ için bir predefined makrodur. Ancak C için değildir.
+```
+
+Dolayısıyla cnec.h dosyasını aşağıdaki gibi
+
+```
+#ifdef __cplusplus
+	extern "C"
+#endif
+
+int func(int);
+```
+Olarak veya çoklu fonksiyon bildirimleri için;
+```
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
+	int func(int);
+	int func2(int);
+
+#ifdef __cplusplus
+}
+#endif
+
+```
 
 
 
