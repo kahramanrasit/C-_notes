@@ -2717,21 +2717,267 @@ Olarak veya çoklu fonksiyon bildirimleri için;
 ```
 
 
+# ODR (One Definition Rule)
+
+ODR bir C++ acronym'idir. Yazılımsal varlıkların (fonksiyon, değişken, template, sınıf gibi) birden fazla bildirimi olabilir fakat
+tüm proje içinde bir tane tanımı olmak zorundadır. Eğer bir yazılımsal varlığın tanımını birden fazla kaynak dosyada oluşturursanız 
+ill-formed olur. Ayrıca ill-formed yapı no diognostic required'dır. Yani derleyici bir diognostic vermek zorunda değildir. Çünkü 
+derleyicinin çalışma birimi kaynak dosyadır. Ama aynı kaynak dosyada bir varlığın birden fazla tanımı yapılırsa derleyici sentaks hatası verir.
+
+ODR'ı ne şekilde ihlal ettiğinize bağlı olarak ve sizin kullandığınız linker programının ne olduğuna ve özelliklerine bağlı olarak en iyi ihtimal ile link 
+zamanında hata alırsınız. 
+
+Bir C++ programının ill-formed olmaması için ODR'ı ihlal etmemesi gerekiyor. 
+
+Bir başlık dosyası olsun.
+
+hakan.h
+```
+int x = 10;
+```
+
+Bu kaynak dosya eğer birden fazla kaynak dosya tarafından include edilirse ODR ihlal edilmiş olur. Çünkü
+her include'da bu tanım tekrar yapılmış oluyor.
+
+Aynı durum fonksiyonlar için de geçerli. Eğer siz bir fonksiyonu olduğu gibi hakan.h'e de tanımlayıp, 
+birden fazla kaynak dosyada hakan.h'yi birden fazla kaynak dosyada include ederseniz, ODR ihlal edilmiş olur.
+
+Ancak siz bu fonksiyonu veya değişkeni static anahtar kelimesi ile tanımlarsanız, o zaman ODR ihlal edilmiş olmaz. 
+Unutulmamalıdır ki bu durum external linkage'da değildir. Yani dolayısıyla static anahtar sözcüğünden dolayı 
+her kaynak dosyada ayrı bir varlık oluşturulur.
+
+Ayrıca const anahtar sözcüğü de internal linkage oluşturur. Yani ODR ihlal edilmez.
+
+hakan.h
+```
+static void func()
+{
+	//code
+}
+static  int x = 10; // ODR ihlal edilmez.
+const int y = 20; // ODR ihlal edilmez.
+```
 
 
+- C++'da bazı varlıkların birden fazla kaynak dosyada tanımlarının bulunması ODR'ı ihlal etmez.
+
+! Ancak token by token tanımlarının aynı olması gerekir. Yani implementasyonları arasında bir farklılık olmamalı.
+
+Yani bu tanıma göre bu varlıkların tanımı başlık dosyalarında yer alabilir, kullanılabilir ve kullanılıyor.
+
+- class definition
+- inline function
+- inline variable definition
+- constexpr function
+- constexpr variable
+- class templates
+- function templates
+
+Özetle bir header file'a ODR'ı ihlal edebilecek hiç bir tanım konulmamalıdır.
 
 
+inline expansion: Derleyicilerin en sık kullandığı bir optimizasyon tekniğidir. Bir compiler optimizasyonudur.
+
+not: inline fonksiyonlarda inline anahtar sözcüğü kullanılıyor diye derleyici inline expansion yapmak zorunda değildir.
+
+inline function: Bir fonksiyon inline anahtar sözcüğü ile tanımlanırsa ODR ihlal edilmeyecek anlamına gelir. Yani bu fonksiyonun tanımı
+birden fazla kaynak dosyada token by token aynı yapılırsa ODR ihlal edilmez. Bu tanıma göre de bir inline fonksiyonun tanımı başlık dosyasına konulabilir.
+
+İnline fonksiyonların kullanılmasının en önemli nedenlerinden biri derleyiciye inline expansion olanağı sağalamaktır, çünkü 
+ancak bu şekilde external bir fonksiyonun tanımının derleyicinin görme şansı vardır. 
+
+Header only library: Sadece başlık dosyası olan yani o başlık dosyasına eşlik eden bir cpp kaynak dosyası yoktur. 
+
+- inline yerine static anahtar kelimesi kullanıldığında internal linkage olacağı için başlık dosyası her çağırıldığında bu fonksiyonlar farklı adreslerde tutulur, çünkü
+farklı varlıklardır.
+
+Not: Yapılan tanımlanın bu modülden hizmet alan programcı tarafından görülmesi istenmiyorsa inline fonksiyon kullanılamaz. Çünkü inline fonksiyon tanımları header file'larda
+yapılır ve header file'lar programcılar ile paylaşılmak zorundadır.
+
+incomplete type: Derleyici o türden haberdardır ama o türün tüm bilgilerini bilmiyordur. Yani o türün bildirimini biliyor ama definition'ununu bilmiyordur. 
+```
+class Neco;
+
+int main()
+{
+	//Neco burada incomplete type olur.
+}
+```
+complete type: O türün tüm bilgilerinin derleyici tarafından bilinmesi demektir. 
+
+Yani bir türün kullanıldığı kodlar söz konusu olduğunda bazı kodlar için türün incomplete type olması o kodun derlenmesi için yeterlidir. Ama bazı kodlar açısından 
+bakıldığında da türün complete type olması gerekiyor.
+
+- incomplete type örnekleri:
+```
+struct Neco;
+
+Neco f1(Neco);
+Neco* f2(Neco&);
+
+typedef Neco* Necoptr;
+using Necoref = Neco&;
+
+extern Neco Necox;
+
+struct X {
+	Neco* m_ptr;
+};
+```
+
+- İncomplete type bir tür ile nesne oluşturulamaz!
+```
+#include <iostream>
+
+struct Nec;
+
+int main()
+{
+	Nec mynec; // hata
+}
+```
+
+Bir örnek:
+```
+#include <iostream>
+
+struct Nec;
+
+Nec* foo();
+
+int main()
+{
+	Nec* p = foo(); // hata olmaz
+	auto x = *p; // hata olur.
+}	
+```
+
+- struct tanımlarında incomplete type bir türü pointer veri elemanı olarak kullanılabilir ancak veri elemanı olarak kullanılamaz.
+```
+struct Nec;
+
+struct Data {
+	Nec* m_ptr;// hata değildir 
+	Nec x; //incomplete type hata
+};
+```
 
 
+Uyarı: Bir modül içerisinde tanımlanmış bir tür kaynak kodda kullanıldığı anda başlık dosyası include edilmemelidir.
+Eğer incomplete type olarak kullanılabiliyorsa forward declaration yapılır. Yani sadece kullanılacak olan türün bildirimi yapılır.
+
+- C++'da sınıfın içinde bildirilen araçlara sınıfın üye fonksiyonları deniyor. "member function"
+
+Eğer bir member function'ı, class definition içerisinde tanımlarsanız inline anahtar sözcüğü kullanılmasa dahi bu fonksiyon inline kabul edilir.
+Dolayısıyla bir fonksiyonu inline fonksiyon yapmanın başka bir yolu bir sınıfın üye fonksiyonu olarak tanımlamaktır. 
+
+inline variables: Herhangi bir başlık dosyasında inline anahtar sözcüğü ile tanımlanan değişkenler de ODR'ı ihlal etmez.
 
 
+const anahtar sözcüğü ile tanımlanan bir nesneye constant expression ile ilk değer verilirse değişkenin kendisinin oluşturduğu ifade de bir constant expression olur. 
+Yani dizi boyutu gibi constant expression gereken yerlerde kullanılabilir. 
+```
+	const int x = 10;
+	int a[x]{}; // geçerlidir.
+```
 
+const bir ifadeye ilk değer verirken değişken bir ifade kullanılabilir ama değer atanan nesne, constant expression oluşturmaz. 
+```
+#include <iostream>
 
+int foo();
 
+int main()
+{
+	const int x = foo(); // değişken bir ifadeyle const bir değişkene ilk değer verildi ama sentaks hatası olmaz.
+	int a[x]{}; // sentaks hatası olur.
+}	
+```
 
+constexpr anahtar sözcüğüyle bir nesne tanımlandığında bu nesneye constant expression ile ilk değer verme zorunluluğu vardır.
+```
+#include <iostream>
 
+int foo();
 
+int main()
+{
+	const int x = foo();  // sentaks hatası değildir
+	constexpr int y = foo(); // sentaks hatası olur.
+}	
+```
 
+Uyarı: constexpr bir tür değildir. Tür yine const olur. 
+```
+#include <iostream>
+
+int main()
+{
+	const int x = 10;
+	constexpr int y = 20;
+
+	decltype(x) a = 22; // a'nın türü const int
+	decltype(y) b = 25; // b'nin türü de const int olur.
+}	
+```
+
+Uyarı: pointerlar için constexpr anahtar sözcüğü nesneye constluk verir yani top-level const olur.
+```
+#include <iostream>
+
+int g = 10;
+constexpr int* p = &g; 
+
+int main()
+{
+	decltype(p) ptr = nullptr; // ptr'ın türü int* const olur.
+}	
+```
+
+Aynı zamanda low level const'da kullanılmak istenirse;
+```
+#include <iostream>
+
+int g = 10;
+constexpr const int* p = &g;
+
+int main()
+{
+	decltype(p) ptr = nullptr; // ptr'nin türü const int* const olur.
+}	
+```
+
+Not: Derleyici const ve constexpr nesneler için yer ayırmak zorunda değildir. Optimizasyon sırasında direk constant expression olan sabiti kullanabilir. Ama o nesnenin
+adresi bir yerde kullanılırsa o zaman o nesne için adresleme yapılmak zorundadır.
+
+constexpr function: Belirli koşullar sağlandığında geri dönüş değerinin derleme zamanında elde edilebilen fonksiyonlardır. Run-time'da değil.
+- constexpr function'un geri dönüş değeri türü void olamaz.
+- fonksiyon içerisinde static anahtar sözcüğü ile nesne tanımlanamaz.
+
+Yani geri dönüş değeri türü, parametre türleri ve yerel değişken türleri "literal type" olmalıdır.
+
+constexpr fonksiyonun parametreleri const expression olmak zorunda değildir. Değişken ifadeler de gönderilebilir ancak bu durumda geri dönüş değeri run-time'da elde edilebilir.
+Yani constexpr fonksiyonların geri dönüş değeri derleme zamanında elde edilme garantisi olan fonksiyonlar değildir. Tüm parametrelere gönderilen argümanlar sabit ifadesi olduğunda derleme 
+zamanında geri dönüş değeri elde edilebilir. 
+
+```
+#include <iostream>
+
+constexpr int sum_square(int a, int b)
+{
+	return a * a + b * b;
+}
+
+int main()
+{
+	int a[sum_square(10, 20)]{};// geçerlidir.
+
+	constexpr auto val = sum_square(10, 20);
+
+}	
+```
+
+Not: constexpr fonksiyonlar aynı zamanda implicit bir şekilde inline fonksiyonlardır ve başlık dosyasında kullanılmaları ODR'ı ihlal etmez. 
 
 
 
