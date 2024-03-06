@@ -2650,6 +2650,7 @@ int func(int x)
 ```
 
 cpp kaynak dosyası olarak da main.cpp dosyasında bu fonksiyon kullanılsın.
+
 main.cpp
 ```
 #include <iostream>
@@ -2666,7 +2667,7 @@ int main()
 Derlediğimizde bir hata görmeyiz ama build ettiğimizde linker hatası ile karşılaşırız.
 
 Hatanın nedeni: Hem C hem C++ için bir fonksiyon çağrısı yapıldığında inline expansion(inline function) değilse yani derleyici bu kodun kaynak kodunu zaten görmüyorsa,
-Derleyici programın akışının fonksiyona geçmesini sağlayan fonksiyona giriş kodlarını ve fonksiyonun çalışması bittikten sonra programın akışının tekrar kaldığı yere dönmesini sağlayan
+derleyici programın akışının fonksiyona geçmesini sağlayan fonksiyona giriş kodlarını ve fonksiyonun çalışması bittikten sonra programın akışının tekrar kaldığı yere dönmesini sağlayan
 fonksiyondan çıkış kodlarını üretiyor. Derleyici fonksiyon inline değilse, fonksiyonun kodunu bilmiyor, sadece bildirimine göre işlem yapıyor. Çağıran fonksiyonun objesiyle(derlenmiş haliyle)
 çağırılan fonksiyonun objesini birleştirmek linker'ın görevidir. bağlayıcı program link aşamasında yapılır. Derleyiciler linkerın fonksiyon çağrısındaki fonksiyonun objesiyle, bu çağıran kodun objesini 
 birleştirebilmesi için derleyiciler obje koda bir referans yazarlar linker'a yönelik, yani linker bu referans ile bağlama işlemini yapar. Linker ile compiler arasında bu isimlendirmenin ne şekilde 
@@ -2683,7 +2684,7 @@ sıra linker'a geldiğinde linker bu fonksiyon için decore edilmiş ismi aradı
 ismi tanıyamıyor. 
 
 Bu problemin çözümü için derleyiciye bu fonksiyonun bir C fonksiyonu olduğunu bildirmemiz gerek ve derleyici bu fonksiyona çağrı yapıldığında C'ye göre decore edebilsin. Derleyiciye
-bu bildirmeyi extern 'C' bildirimi denilir. Eğer fonksiyon bildiriminin başında (header dosyaya) extern "C" eklerseniz C++ derleyicisi bu bildirimi gördüğünde fonksiyonun artık C'de derlenmiş bir fonksiyon
+bu bildirmeyi extern 'C' bildirimi ile yapılabilir. Eğer fonksiyon bildiriminin başında (header dosyaya) extern "C" eklerseniz C++ derleyicisi bu bildirimi gördüğünde fonksiyonun artık C'de derlenmiş bir fonksiyon
 olduğunu anlar. Ancak unutulmamalıdır ki extern "C", C'de geçerli olmaz. Bu sebeple bir başlık dosyası hem C'de hem de C++'da derlenecek ise conditional compiling kullanılarak yapılabilir.
 
 predefined symbolic constants
