@@ -2982,8 +2982,53 @@ Not: constexpr fonksiyonlar aynı zamanda implicit bir şekilde inline fonksiyon
 
 
 
+# Classess (sınıflar)
+
+- C'de struct, union e enum bir user-defined type'dı.
+- C++'da class ile de user-defined type tür oluşturabiliyor.
+- C'de kullanılan struct bir sınıf değilken C++'da kullanılan struct'lar artık bir sınıf olarak değerlendiriliyor.
+
+Class, C++'da data abstraction konusundaki temel araçtır. Problem veya çözüm domain'indeki bir varlığın yazılımsal olarak temsilidir.
+
+class declaration - forward declaration
+```
+class Nec; // class bildirimi
+```
+
+class definition:
+```
+class Myclass {
+	//class member	
+};
+//Yukarıda Myclass bir classtag'dir.
+```
+
+class member 3 kategoriden oluşabilir.
+- data member -> static data member / non-static data member
+- member function -> static member function / non-static member function
+- type member / member type / nested type
 
 
+- Derleyici class tanımı gördüğünde bir storage allocation'a neden olmaz. class definition sadece tür hakkında bilgi verir. Bu türden bir nesnenin oluşturulması
+durumunda o nesne için yer ayrılır.
+- Sınıfın ststic elemanları olabilir ancak bir sınıf static anahtar sözcüğü ile tanımlanamaz.
+
+
+Sınıflar erişim kontrolüne sahiptir. "access kontrol"
+
+C++'da erişiminize izin verilmeyen bir isim kullanıldığında o isim aranır, bulunur ama derleyici sizin kullanımıza kapalı olduğunu görünce sentaks hatası olarak değerlendirilir.
+
+
+Bir sınıfın elemanı üzerinde kimlerin kullanma hakkının olduğunu belirleyen 3 kategori vardır. (access specifiers)
+- public
+- private
+- protected
+
+C++'de access specifiers'lar anahtar sözcüklerdir.
+
+public: sınıfın public ögeleri herkese açık ögelerdir. Yani sınıfın sadece kendisi değil client'ların da kullanmaya yetkisi vardır.
+
+priva
 
 
 
