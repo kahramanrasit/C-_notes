@@ -3028,7 +3028,526 @@ C++'de access specifiers'lar anahtar sözcüklerdir.
 
 public: sınıfın public ögeleri herkese açık ögelerdir. Yani sınıfın sadece kendisi değil client'ların da kullanmaya yetkisi vardır.
 
-priva
+private: Sadece sınıfın kendi kodlarına açık ama dışarıdan kullanılması yasak olan isimlerin tanıtıldığı bölümdür. Sadece sınıfın kendi kodları kullanabilir. 
+
+protected: inheritence (kalıtım/miras) ile alakalıdır.
+
+Eğer sınıf tanımında access specifiers kullanılmaz ise default olarak private kabul edilir. Struct anahtar kelimesiyle sınıf tanımlandığında default olarak member'lar public olur.
+```
+class Myclass {
+	int a, b; // private olur
+};
+
+struct Myclass {
+	int a, b; // public olur
+};
+```
+
+Sınıfların içerisinde ne kadar fazla non-static veri elemanı varsa sınıf nesnelerinin storage ihtiyacı o denli artar(sizeof).
+
+Bir sınıf türünden nesneye verilen isim "object, instance" denir.
+```
+#include <iostream>
+
+class Myclass {
+	int x, y;
+};
+
+int main()
+{
+	Myclass m1; // instance (obje)
+}
+```
+
+Aynı sınıfın instance(object) leri aynı tanıma uyarlar, belirli özellikleri farklı ama aynı tanıma sahiptir. 
+
+
+class scope:
+- member selection (dot operator) "." 
+- arrow operator "->"
+- scope resolution operator "::"
+
+Yukarıdaki operatörlerin sağındaki isim, class'ın tanımı içinde aranabilir. 
+
+Bir isim kullanıldığında derleyici, aşağıdaki sıralama ile arama yapılır.
+
+- name look up
+- context control
+- access control
+
+
+
+Aşağıdaki örnekte hatanın sebebi access control olur.
+```
+#include <iostream>
+
+class Myclass {
+	int x;
+};
+
+int main()
+{
+	Myclass mx;
+	mx.x; // access control
+}
+```
+Yani derleyici önce name look up ile ismin tanımını class içinde bulmuştur. Sonrasında contex kullanımını tür uygunluğuna göre kontrol etmiştir. 
+En son access control kısmında hata alır çünkü class member private'dır.
+
+
+
+Aşağıdaki örnekde de bir değişken tanımı, bir fonksiyon gibi kullanılmaya çalışıldığı için context control hatası görülür.
+```
+#include <iostream>
+
+class Myclass {
+public:
+	int x;
+};
+
+int main()
+{
+	Myclass mx;
+	mx.x(); //context control hatası
+}
+```
+
+
+Uyarı: Sınıfın public, private ve protected bölümleri sınıf içindeki ayrı scope'lar değildir. 
+
+```
+class Myclass {
+public:
+	void x();
+private:
+	int x;
+};
+```
+
+
+- Function overloading kuralları class'lar içerisinde geçerlidir.
+```
+#include <iostream>
+
+class Myclass {
+public:
+	void f(int);
+private:
+	void f(double);
+};
+
+int main()
+{
+	Myclass m;
+	m.f(1.2); // access control hatası
+}
+```
+
+
+member function:
+```
+#include <iostream>
+
+void f1(int); // global function - free function - stand alone function
+
+class Myclass {
+public:
+	void f2(int); // member function - non-static member function
+private:
+	int mx, my; // non-static data member
+};
+```
+
+- Sınıfların non-static öğe fonksiyonlarının aslında gizli bir pointer parametre değişkenine sahip ama o parametre değişkeni yazılmaz. Yani bildirimde kaç parametre değişkeni var ise aslında o
+sayının bir fazlası adedinde parametreye sahiptpr. Bir parametre değişkeni sınıf türünden pointer olur. Bu pointer değişken de sınıfın kendisini gösterir.
+
+- C++ dilinde class fonksiyonlarının definition'u yapılırken public/private kelimeleri kullanılmaz ama projeye göre progreamcıların görebilmesi için ön işlemci komutları kullanılabilir.
+
+
+```
+//myclass.h
+class Myclass{
+public:
+	void foo();
+};
+
+//myclass.cpp
+
+#include "myclass.h"
+#define PUBLIC
+#define PRIVATE
+#define PROTECTED
+
+PUBLIC void Myclass::foo();
+{
+}
+
+```
+
+
+
+- classların içerisinde fonksiyon tanımı yapıldığında o fonksiyon otomatik olarak inline fonksiyon olur.
+- Bir header dosyada bir fonksiyonun bildirimi class içerisinde yapılırsa ve class'ın dışında o fonksiyonun tanımı yapılırsa ODR ihlal edilmiş olur.
+```
+//myclass.h
+
+class Myclass {
+public:
+	void foo();
+};
+
+void Myclass::foo();
+{
+	// Eğer bu header file birden fazla kez include edilirse ODR ihlal edilmiş olur.
+	// ODR'ın ihlal edilmemesi için inline anahtar kelimesi ile definition yapılmalıdır.
+}
+```
+
+Eğer bir isim sınıfın üye fonksiyonu içinde nitelenmeden (unqualified name) kullanılmış ise aşağıdaki sıralamada arama gerçekleşir.
+- Kullanılan block içerisinde
+- Onu kapsayan block ve blocklar içerisinde (enclosing block)
+- class scope'da (class definition) içerisinde
+- namespace'de aranır.
+
+```
+#include <iostream>
+
+class Myclass {
+public:
+	void foo();
+private:
+	int x;
+};
+
+Myclass g;
+
+void Myclass::foo()
+{
+	g.x = 10; // geçerli bir kod olur.
+}
+
+```
+
+name look up'ın anlaşılması için bir örnek:
+```
+#include <iostream>
+
+class Myclass {
+public:
+	void foo();
+private:
+	int x = 10;
+};
+
+int x = 15;
+
+int main()
+{
+	Myclass c;
+	c.foo();
+}
+
+void Myclass::foo()
+{
+	int x = 20;
+
+	int result = ::x + x + Myclass::x; // 15 + 20 + 10 işleme alınır.
+	std::cout << "result = " << result;
+}
+```
+
+Bir örnek:
+```
+#include <iostream>
+
+class Myclass {
+public:
+	void func(int);
+};
+
+void func(int, int);
+
+
+void Myclass::func()
+{
+	func(10, 20); // class scope'daki func ismi görülür ve hata olur. 
+}
+```
+
+
+this: 
+
+Bu anahtar sözcük yalnızca sınıfın non-static üye fonksiyonları içinde kullanılabilir. Global fonksiyon içerisinde veya sınıfın static bir üye fonksiyonu
+içerisinde bu anahtar sözcüğün kullanımı sentaks hatasıdır.
+
+this bir pointer'dır "this pointer" olarak da sıkça kullanılır. 
+
+Örnek olarak:
+
+```
+#include <iostream>
+
+class Myclass {
+public:
+	void foo()
+	{
+		std::cout << "this = " << this << "\n";
+	}
+};
+
+int main()
+{
+	Myclass m;
+
+	std::cout << "&m = " << &m << "\n";
+	m.foo();
+}
+```
+Yukarıdaki örnekte this pointer'ı m nesnesinin adresini gösterir.
+
+- this yalnız başına bir ifadedir ve değer kategorisi PR value'dır. 
+```
+class Myclass {
+public:
+	void foo()
+	{
+		mx = 20;
+		Myclass::mx = 20;
+		this->mx = 20; // son üç satırdaki mx aynı nesneyi ifade eder.
+	}
+private:
+	int mx;
+};
+```
+
+- this anahtar sözcüğünün varlık sebebi için bir örnek:
+```
+class Myclass {
+public:
+	void f();
+};
+
+void f1(Myclass*);
+void f2(Myclass);
+void f3(Myclass&);
+
+void Myclass::f()
+{
+	f1(this);
+	f2(*this);
+	f3(*this);
+}
+```
+===
+```
+class Myclass {
+public:
+	Myclass* f1()
+	{
+		return this;
+	}
+	Myclass f2()
+	{
+		return *this;
+	}
+	Myclass& f3()
+	{
+		return *this;
+	}
+};
+```
+
+
+Bir chaining-fluent API örneği:
+```
+#include <iostream>
+
+class Myclass {
+public:
+	Myclass& f1()
+	{
+		std::cout << "Myclass::f1() this = " << this << "\n";
+		return *this;
+	}
+	Myclass* f2()
+	{
+		std::cout << "Myclass::f2() this = " << this << "\n";
+		return this;
+	}
+	Myclass* f3()
+	{
+		std::cout << "Myclass::f3() this = " << this << "\n";
+		return this;
+	}
+	Myclass* f4()
+	{
+		std::cout << "Myclass::f4() this = " << this << "\n";
+		return this;
+	}
+};
+
+int main()
+{
+	Myclass m;
+
+	m.f1().f2()->f3()->f4(); //chaining-fluent API
+}
+
+```
+
+
+const member function: Fonksiyonlar söz konusu olduğunda ister global fonksiyon olsun (free, non-member function) ister sınıfların member function'u olsun, bir fonksiyon
+bir şekilde bir sınıf nesnesini referans semantiği veya pointer semantiği ile alıyorsa şunlardan biri olmak zorundadır.
+- accessor function -> salt okuma immutable
+- mutator function -> değiştirmeye yönelik mutable
+
+Sınıfların non-static üye fonksiyonuları:
+- const member function
+- non-const member function
+
+```
+class Myclass {
+public:
+	int set(); //mutator
+	int get()const; //accessor, buradaki const fonksiyonun ilk parametresindeki gizli pointer'ın const'u dur.
+};
+```
+
+
+const üye fonksiyonlar sınıfların non-static veri elemanlarını değiştiremezler.
+```
+class Myclass {
+public:
+	void func()const
+	{
+		mx = 10; // hata olur. (const Myclass*).mx 
+	}
+private:
+	int mx;
+};
+```
+
+const bir sınıf nesnesi için sınıfın yalnızca const üye fonksiyonları çağırılabilir.
+```
+#include <iostream>
+
+class Myclass {
+public:
+	void foo()
+	{
+		func(); // legal -> T* türünden const T* türüne dönüşüm vardır.
+	}
+	void func()const
+	{
+		auto x = mx; // legaldir. mx nesnesi değiştirilmiyor.
+		foo(); // illegaldir. const T* dan T* a dönüşüm var. 
+	}
+private:
+	int mx;
+};
+
+int main()
+{
+	Myclass m;
+
+	m.foo(); // legal
+	m.func(); // legal'dir çünkü T*'dan const T*a dönüşüm vardır.
+
+	const Myclass c;
+
+	c.foo(); // illegal çünkü const T*'dan T* a çağrı
+	c.func(); //legal'dir const T*'dan const T* a çağrı
+	
+}
+```
+Yukarıdaki örnekte görüldüğü üzere sınıfın const üye fonksiyonları, sınıfın non-const üye fonksiyonlarını çağıramaz. Ama sınıfın non-const üye fonksiyonları, sınıfın const 
+üye fonksiyonlarını çağırabilir.
+
+
+
+
+- Sınıfın const üye fonksiyonları, sınıfın const üye fonksiyonlarını çağırabilir.
+```
+class Myclass {
+public:
+	void foo()const
+	{
+
+	}
+	void func()const
+	{
+		foo(); // legal olur.
+	}
+};
+```
+====
+```
+class Myclass {
+public:
+	Myclass* foo()const
+	{
+		return this; // illegal olur. const T* türünden T* türüne dönüşüm vardır.
+	}
+
+};
+```
+====
+```
+class Myclass {
+public:
+	void foo()const
+	{
+		Myclass m;
+		m.mx = 10;// legaldir. buradaki mx block scope içindeki mx olur.
+	}
+
+private: 
+	int mx;
+};
+```
+====
+```
+class Myclass {
+public:
+	void foo()const;
+};
+
+Myclass g;
+
+void Myclass::foo()const
+{
+	*this = g; // illegal olur çünkü const T* türünden bir nesne değiştirilmeye çalışılıyor.
+}
+```
+====
+```
+class Myclass {
+public:
+	void foo();
+	void foo()const;
+};
+
+
+int main()
+{
+	Myclass m;
+	m.foo(); // foo() çağırılır.
+
+	const Myclass k;
+	k.foo(); // foo()const çağırılır.
+	
+}
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
