@@ -2984,7 +2984,7 @@ Not: constexpr fonksiyonlar aynı zamanda implicit bir şekilde inline fonksiyon
 
 # Classess (sınıflar)
 
-- C'de struct, union e enum bir user-defined type'dı.
+- C'de struct, union ve enum bir user-defined type'dı.
 - C++'da class ile de user-defined type tür oluşturabiliyor.
 - C'de kullanılan struct bir sınıf değilken C++'da kullanılan struct'lar artık bir sınıf olarak değerlendiriliyor.
 
@@ -3000,7 +3000,7 @@ class definition:
 class Myclass {
 	//class member	
 };
-//Yukarıda Myclass bir classtag'dir.
+//Yukarıda Myclass bir class tag'dir.
 ```
 
 class member 3 kategoriden oluşabilir.
@@ -3009,9 +3009,10 @@ class member 3 kategoriden oluşabilir.
 - type member / member type / nested type
 
 
-- Derleyici class tanımı gördüğünde bir storage allocation'a neden olmaz. class definition sadece tür hakkında bilgi verir. Bu türden bir nesnenin oluşturulması
+Derleyici class tanımı gördüğünde bir storage allocation'a neden olmaz. class definition sadece tür hakkında bilgi verir. Bu türden bir nesnenin oluşturulması
 durumunda o nesne için yer ayrılır.
-- Sınıfın ststic elemanları olabilir ancak bir sınıf static anahtar sözcüğü ile tanımlanamaz.
+
+Sınıfın static elemanları olabilir ancak bir sınıf static anahtar sözcüğü ile tanımlanamaz.
 
 
 Sınıflar erişim kontrolüne sahiptir. "access kontrol"
@@ -3055,7 +3056,7 @@ class Myclass {
 
 int main()
 {
-	Myclass m1; // instance (obje)
+	Myclass m1; // instance (object)
 }
 ```
 
@@ -3120,7 +3121,7 @@ class Myclass {
 public:
 	void x();
 private:
-	int x;
+	int x; // sentaks hatası olur
 };
 ```
 
@@ -3159,9 +3160,9 @@ private:
 ```
 
 - Sınıfların non-static öğe fonksiyonlarının aslında gizli bir pointer parametre değişkenine sahip ama o parametre değişkeni yazılmaz. Yani bildirimde kaç parametre değişkeni var ise aslında o
-sayının bir fazlası adedinde parametreye sahiptpr. Bir parametre değişkeni sınıf türünden pointer olur. Bu pointer değişken de sınıfın kendisini gösterir.
+sayının bir fazlası adedinde parametreye sahiptir. Bir parametre değişkeni sınıf türünden pointer olur. Bu pointer değişken de sınıfın kendisini gösterir.
 
-- C++ dilinde class fonksiyonlarının definition'u yapılırken public/private kelimeleri kullanılmaz ama projeye göre progreamcıların görebilmesi için ön işlemci komutları kullanılabilir.
+- C++ dilinde class fonksiyonlarının definition'u yapılırken public/private kelimeleri kullanılmaz ama projeye göre programcıların görebilmesi için ön işlemci komutları kullanılabilir.
 
 
 ```
@@ -3498,6 +3499,7 @@ public:
 	void foo()const
 	{
 		Myclass m;
+		int mx;
 		m.mx = 10;// legaldir. buradaki mx block scope içindeki mx olur.
 	}
 
