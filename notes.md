@@ -3541,18 +3541,211 @@ int main()
 }
 ```
 
+Uyarı: Sınıfın tüm (non-static) veri elemanları, sınıf nesnesinin observable state'i ile doğrudan ilişkili olmayabilir. 
+
+Mutable: mutable anahtar sözcüğü, derleyiciye const üye fonksiyonlar içinde bu veri elemanının değerinin değişmesini legal olarak
+kabul et, yani const nesneleri için bu veri elemanının değerinin değişmesini legal olarak kabul et denilmiş oluyor. 
+Ayrıca semantik olarak mutable değişkenler, sınıf nesnesinin problem domainindeki anlamından bağımsız olarak onun değerine bir katkıda bulunmuyor.
+
+Aşağıda görüldüğü üzere m_debug_count problem domaininden farklı bir amaçla tanımlanmıştır.
+```
+class Date {
+public:
+	void print()const
+	{
+		++m_debug_count;
+	}
+private:
+	int md, mm, my;
+	mutable int m_debug_count;
+};
+```
+
+Aşağıda görüldüğü gibi sınıfdaki mx veri elemanı mutable olduğu için sınıf const olarak tanımlanmasına rağmen mx üzerinde değişiklik yapılabildi. Derleyici const controlü yapmadı.
+```
+#include <iostream>
+
+class Nec {
+public:
+	mutable int mx{};
+};
+
+int main()
+{
+	const Nec mynec;
+	mynec.mx = 5; 
+}
+```
+
+# Sınıfların contructor ve destructor üyeleri
 
 
+Bir sınıf nesnesini hayata getiren anlamında constructor, nesnenin hayatını bitiren anlamında destructor kullanılır.
+
+- Constructor'ın ismi sınıfın ismi ile aynı olmak zorundadır.
+```
+class Myclass {
+public:
+	Myclass(); // constructor
+	Myclass(int); // constructor'larda overloading vardır.
+};
+```
+
+Bir sınıfın birden fazla contructor'ı olabilir. 
+
+Uyarı: Ctor'ların geri dönüş değeri kavramı yoktur. Void anahtar sözcüğü kullanımı illegaldir. void anahtar sözcüğü ile kullanılamaz.
+
+- Ctors sınıfın (non-static) üye fonksiyonudur. (yani this pointer kullanılabiliyor)
+- Ctors, sınıfın static üye fonksiyonu olamaz, const üye fonksiyonu olamaz.
+- Ctors, sınıfın public üye fonksiyonu olmak zorunda değildir. (private ya da protected da olabilir)
+- Ctors ismi ile (nokta ya da ok operatörü ile) çağırılamaz.
+
+```
+#include <iostream>
+
+class Myclass {
+public:
+	Myclass()
+	{
+		mx = 4; 
+		this->mx = 5;
+		Myclass::mx = 6; 
+	}
+private:
+	int mx, my;
+};
+```
 
 
+Destructor: Ctors'dan farklı olarak yine sınıf ismi ile aynı olmalı fakat başında tilde(~) karakteri olmak zorundadır. 
+
+- Bir sınıfın destructor'ının parametre değişkeni olamaz!
+- Dolayısıyla Dtor'lar overload edilemezler.
+```
+class Myclass {
+public:
+	Myclass(){} //Ctor
+	~Myclass(){}//Dtor
+};
+```
+
+Default Constructor (varsayılan constructor): 
+> Bir sınıfın varsayılan constructor'ı olması için bu contructor'ın parametre değişkeni olmamalıdır ya da tüm parametre değişkenleri varsayılan argüman olmalıdır.
+```
+class Myclass {
+public:
+	Myclasss(int = 10);
+};
+```
+
+Yani pratik olarak default constructor argüman gönderilmeden çağırılan constructor'dır. 
+
+> Special Member Function (sıfın özel üye fonksiyonları)
+
+Bu fonksiyonların kodları(tanımları) belirli koşullar sağlandığında derleyici tarafından yazılabiliyor. 
+> Dilin kurallarına göre (implicitly) bu fonksiyonları bildirebilir ve bizim için bu fonksiyonların kodlarını yazabilir.
+> Programcı tarafından derleyiciden bu fonksiyonların kodu yazmasını talep edebilir.
 
 
+6 tane special member function vardır. 
+- Default constructor (default olmayanlar değildir)
+- Destructor
+- copy ctor (copy member)
+- copy assignment (copy member)
+- move ctor (move member)
+- move assignment(move member)
+
+Global sınıf nesnesi: Bir global sınıf nesnesi için Ctor, main fonksiyonunun çağırılmasından önce çağırılır çünkü global nesneler hayata main fonksiyonu çağırılmadan giriyorlar. Destructor da main fonksiyonu
+çağırıldıktan sonra çağırılır. 
+
+```
+#include <iostream>
+
+class Myclass {
+public:
+	Myclass()
+	{
+		std::cout << "default ctor this: " << this << "\n";
+	}
+	~Myclass()
+	{
+		std::cout << "destructor this: " << this << "\n";
+	}
+};
+
+Myclass g;
+
+int main()
+{
+	std::cout << "main basladi\n";
+	std::cout << "&g = " << &g << "\n";
+	std::cout << "main sona eriyor\n";
+}
+```
+Eğer 3 tane global nesne olursa g1, g2, g3 gibi. Bu durumda sıralamaya göre ctor'lar çağırılır ancak dtor'lar ters sıraya göre çağırılır Yani ilk definition'u yapılan nesnenin ömrü en uzun olur.
+```
+#include <iostream>
+
+class Myclass {
+public:
+	Myclass()
+	{
+		std::cout << "default ctor this: " << this << "\n";
+	}
+	~Myclass()
+	{
+		std::cout << "destructor this: " << this << "\n";
+	}
+};
+
+Myclass g1;
+Myclass g2;
+Myclass g3;
 
 
+int main()
+{
+	std::cout << "main basladi\n";
+	std::cout << "main sona eriyor\n";
+}
+```
 
+Uyarı: Farklı kaynak dosyalarda tanımlanmış global sınıf nesnelerinin hayata gelme sırası belirli değildir. (static initialization fiasco)
 
+> static (yerel) sınıf nesneleri için:
+static anahtar sözcüğü ile oluşturulan yerel değişkenler eğer onların oluşturuldukları fonksiyon çağırılmaz ise zaten hayata gelmeyecektir. Static nesneler bir kere çağırıldığında ömrü programın sonuna kadar devam eder.
 
+```
+#include <iostream>
 
+class Myclass {
+public:
+	Myclass()
+	{
+		std::cout << "default ctor this: " << this << "\n";
+	}
+	~Myclass()
+	{
+		std::cout << "destructor this: " << this << "\n";
+	}
+};
+
+void foo()
+{
+	std::cout << "foo cagirildi\n";
+	static Myclass m;
+}
+
+int main()
+{
+	std::cout << "main basladi\n";
+	foo();
+	foo();
+	foo();
+	std::cout << "main bitiyor\n";
+}
+```
+Yukarıdaki foo fonksiyonu her çağırıldığında ctor çağırılmıyor, bir kere ctor çağırılıyor ve main biterken dtor çağırılır. 
 
 
 
