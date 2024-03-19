@@ -3748,20 +3748,246 @@ int main()
 Yukarıdaki foo fonksiyonu her çağırıldığında ctor çağırılmıyor, bir kere ctor çağırılıyor ve main biterken dtor çağırılır. 
 
 
+Otomatik ömürlü sınıf nesleri için: Constructor programın akışı o nesnenin oluşturulduğu noktaya geldiğinde constructor çağırılır. O nesnenin hayatının sonunu belirleyen closing brace'e geldiğinde
+yani scope'unun sonunda destructor çağırılır.
+
+```
+#include <iostream>
+
+class Myclass {
+public:
+	Myclass()
+	{
+		std::cout << "default ctor this: " << this << "\n";
+	}
+	~Myclass()
+	{
+		std::cout << "destructor this: " << this << "\n";
+	}
+};
+
+void foo()
+{
+	std::cout << "foo cagirildi\n";
+	Myclass m; // otmatik ömürlü Myclass nesnesi
+}
+
+int main()
+{
+	std::cout << "main basladi\n";
+	foo();
+	foo();
+	foo();
+	std::cout << "main bitiyor\n";
+}
+```
+
+> Dinamik ömürlü nesneler C++'da "new" operatörü ile hayata geritilir. Delete operatörü de nesnelerin hayatını bitirir.
+- new expression
+- delete expression
+
+Uyarı: new, malloc'un karşılığı değildir. New, dinamik ömürlü bir nesne oluşturmanın karşılığıdır. delete, free'nin karşılığı değildir. free, memory allocation yapar. delete expression ise bir nesnenin
+hayatını sonlanmasını sağlar. 
+
+```
+new Fighter;
+```
+yazılarak bir nesne dinamik ömürlü oluşturulduğunda, derleyici tarafından operator new fonksiyonu kullanılır. 
+```
+void * operator new(std::size_t);
+//tıpkı malloc fonksiyonu gibidir.
+void* malloc(std::std_t);
+```
+Aralarındaki fark malloc başarısız olduğunda null pointer döndürüyor, başarılı olduğunda allocate edilmiş bellek bloğunu döndürür. Operator new başarısız olduğunda "exception throw" verir.
+```
+#include <iostream>
+
+class Myclass {
+public:
+	Myclass()
+	{
+		std::cout << "default ctor this: " << this << "\n";
+	}
+	~Myclass()
+	{
+		std::cout << "destructor this: " << this << "\n";
+	}
+	void func()
+	{
+		std::cout << "Nec::func()\n";
+	}
+};
 
 
 
+int main()
+{
+	std::cout << "main basladi\n";
+	auto p = new Myclass; // auto Myclass* türünden olur.
+	p->func();
+
+	delete p; //dtor çağırılıyor.
+}
+```
+
+- Dinamik bir nesne için delete çağırılmaz ise memory sızıntısı olur ama sadece memory sızıntısı ile kalmaz. Destructor fonksiyonunun çağırılmaması çok daha farklı problemlere yol açabilir.
+> RAII -> resource acquisition is initialization
+
+Constructor bir çok sınıf türünün bir nesnenin kullanabilmesi için o nesne hayata getirildiğinde bir ya da birden fazla kaynağın o nesneye bağlanması o nesnenin o kaynağı ya da kaynakları kullanıyor durumuna getirilmesi sağlanıyor.
+Bu kaynak ya da kaynaklara terimsel olarak resources diyoruz. Bu resource bir bellek alanı olabilir, bir dosya olabilir, bir veri tabanı olabilir, bir mutex olabilir. Bir network bağlantısı olabilir. Nesnenin Destructor'ı çağırıldığında
+destructor bu kaynakları tipik olarak geri veriyor. Eğer destructor çağırılmaz ise bu durumda resource leak oluşur. Memory leak de bir resource leak sayılabilir. 
+
+
+> Default contructor aşağıdaki durumlarda çağırılı.
+```
+Nec n1; // default init
+Nec n2{}; // value init
+Nec a[10]; // dizinin her elemanı için default ctor çağırılır.
+
+Nec x(); //!! function declaration olur.
+```
+
+
+Bir sınıfın default contructor'ı olmak zorunda değildir. "not - declared"
+
+User-declared bir special member function'un bildirimini kendimiz yaparsak user-declared olarak adlandırılır. 
+User-declared alt kategorilere ayrılıyor:
+- user declared define: tanımı da bildirimi de programcı tarafından yapılan
+- user declared defaulted: programcı bildirimi yapar ama tanımının yazılması derleyiciden talep edilir.
+- user declared deleted
+
+
+```
+class Nec {
+public:
+	Nec() = default;
+};
+```
+
+- to delete a function: fonksiyon vardır ama bu fonksiyona çağrı sentaks hatası oluşturur.
+```
+void func(int) = delete;
+```
+Uyarı: delete edilmiş bir fonksiyon, function overload resolution'da viable olur ve seçilebilir ama delete edildiği için sentaks hatası olur.
+
+```
+class Nec {
+public:
+	Nec() = delete;
+};
+```
+
+> implicitly declared: Aslında siz direk olarak bi class tanımladığınızda, special member funciton'larda 6'dsı da implicitly olarak tanımlanır. (defaulted, deleted olarak)
+
+
+Yani özetle sınıfın special member function'ları aşağıdakilerden birine ilişkin olur:
+- not declared
+- user-declared //programcı tarafından
+> user declared defined
+> user declared defaulted
+> user declared deleted
+- implicitly declared
+> defaulted
+> deleted
+
+
+```
+#include <iostream>
+
+class Myclass {
+public:
+	Myclass(int x)
+	{
+		std::cout << "Myclass(int x) x = " << x << "\n";
+	}
+	Myclass(int x, int y)
+	{
+		std::cout << "Myclass(int x, int y) x = " << x << "y = " << y << "\n";
+	}
+};
 
 
 
+int main()
+{
+	Myclass x1(10); // direct init
+	Myclass x2{ 25 }; //direct list init
+	Myclass x3 = 59; //copy init
+
+	Myclass x4(1, 5);// overload
+	Myclass x5{ 5,6 };
+	Myclass x6 = { 7,8 };
+}
+```
 
 
+Ctor initializer list / member initializer list:
+Hayata getireceği sınıf nesnesinin veri elemanlarını initialize eder. Non-static veri elemanlarını initialize etmek için ctor'ların kullandığı sentaksa ctor initializer list denir. Bu sentaks sadece ctor'lar için geçerlidir.
+```
+class Myclass {
+public:
+	Myclass() : mx{ 10 }, my{ 20 }, md{ 4.6 }
+	{
 
+	}
+private:
+	int mx, my;
+	double md;
+};
+```
+Tüm veri elemanları ctor initializer list ile initialize etmek zorunda değilsiniz. Ama initialize edilmeyen veri elemanları default initialize edilmiş olur. Bu durum primitive türden öğelerin çöp değerde kalması demektir. 
+Bu sebeple 1. tercihimiz veri elemanlarını ctor init list'te initialize etmek olmalıdır. Ctor fonksiyonu içinde atama(assignment) da yapılabilir ama tercih edilemez. 
 
+Her zaman veri elemanlarının hayata gelme sırası, class definition'daki sıradır. 
+```
+class Myclass {
+public:
+	Myclass() : m_b{ 10 }, m_a{m_b * 20}
+	{
 
+	}
+private:
+	int m_a, m_b;
+};
+```
+- class definition'da m_a ilk init edildiği için ctor'da da ilk olarak m_a init edilir ve m_b çöp değerde kalır.
 
+```
+#include <iostream>
 
+class Date {
+public:
+	Date(int day, int mon, int year);
+private:
+	int m_day, m_mon, m_year;
+};
 
+//date.cpp
+Date::Date(int day, int mon, int year) : m_day{ day }, m_mon{ mon }, m_year{ year }{}
+
+int main()
+{
+	Date today{ 24, 9, 2022 };
+}
+```
+
+Bir class'ın reference veri elemanları ve const veri elemanları ctor init listte initialize edilmez ise default init olur ve bu da sentaks hatası olur. 
+```
+#include <iostream>
+
+class Nec {
+public:
+	Nec() : mx{ 0 }
+	{
+
+	}
+private:
+	int mx;
+	int& r; // init edilmedi
+	const int c; // init edilmedi
+};
+
+```
 
 
 
