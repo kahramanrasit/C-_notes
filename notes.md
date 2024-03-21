@@ -3544,7 +3544,7 @@ int main()
 Uyarı: Sınıfın tüm (non-static) veri elemanları, sınıf nesnesinin observable state'i ile doğrudan ilişkili olmayabilir. 
 
 Mutable: mutable anahtar sözcüğü, derleyiciye const üye fonksiyonlar içinde bu veri elemanının değerinin değişmesini legal olarak
-kabul et, yani const nesneleri için bu veri elemanının değerinin değişmesini legal olarak kabul et denilmiş oluyor. 
+kabul et denilmiş oluyor. 
 Ayrıca semantik olarak mutable değişkenler, sınıf nesnesinin problem domainindeki anlamından bağımsız olarak onun değerine bir katkıda bulunmuyor.
 
 Aşağıda görüldüğü üzere m_debug_count problem domaininden farklı bir amaçla tanımlanmıştır.
@@ -3591,7 +3591,7 @@ public:
 };
 ```
 
-Bir sınıfın birden fazla contructor'ı olabilir. 
+Bir sınıfın birden fazla constructor'ı olabilir. 
 
 Uyarı: Ctor'ların geri dönüş değeri kavramı yoktur. Void anahtar sözcüğü kullanımı illegaldir. void anahtar sözcüğü ile kullanılamaz.
 
@@ -3630,7 +3630,7 @@ public:
 ```
 
 Default Constructor (varsayılan constructor): 
-> Bir sınıfın varsayılan constructor'ı olması için bu contructor'ın parametre değişkeni olmamalıdır ya da tüm parametre değişkenleri varsayılan argüman olmalıdır.
+- Bir sınıfın varsayılan constructor'ı olması için bu contructor'ın parametre değişkeni olmamalıdır ya da tüm parametre değişkenleri varsayılan argüman olmalıdır.
 ```
 class Myclass {
 public:
@@ -3640,10 +3640,10 @@ public:
 
 Yani pratik olarak default constructor argüman gönderilmeden çağırılan constructor'dır. 
 
-> Special Member Function (sıfın özel üye fonksiyonları)
+- Special Member Function (sıfın özel üye fonksiyonları)
 
 Bu fonksiyonların kodları(tanımları) belirli koşullar sağlandığında derleyici tarafından yazılabiliyor. 
-> Dilin kurallarına göre (implicitly) bu fonksiyonları bildirebilir ve bizim için bu fonksiyonların kodlarını yazabilir.
+- Dilin kurallarına göre (implicitly) bu fonksiyonları bildirebilir ve bizim için bu fonksiyonların kodlarını yazabilir.
 > Programcı tarafından derleyiciden bu fonksiyonların kodu yazmasını talep edebilir.
 
 
