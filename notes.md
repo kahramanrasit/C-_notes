@@ -3643,8 +3643,8 @@ Yani pratik olarak default constructor argüman gönderilmeden çağırılan con
 - Special Member Function (sıfın özel üye fonksiyonları)
 
 Bu fonksiyonların kodları(tanımları) belirli koşullar sağlandığında derleyici tarafından yazılabiliyor. 
-- Dilin kurallarına göre (implicitly) bu fonksiyonları bildirebilir ve bizim için bu fonksiyonların kodlarını yazabilir.
-> Programcı tarafından derleyiciden bu fonksiyonların kodu yazmasını talep edebilir.
+- Dilin kurallarına göre (implicitly) bu fonksiyonları bildirebilir ve derleyici bizim için bu fonksiyonların kodlarını yazabilir.
+> Programcı tarafından derleyiciden bu fonksiyonların kodu yazmasını talep edilebilir.
 
 
 6 tane special member function vardır. 
@@ -3710,10 +3710,10 @@ int main()
 }
 ```
 
-Uyarı: Farklı kaynak dosyalarda tanımlanmış global sınıf nesnelerinin hayata gelme sırası belirli değildir. (static initialization fiasco)
+> Uyarı: Farklı kaynak dosyalarda tanımlanmış global sınıf nesnelerinin hayata gelme sırası belirli değildir. (static initialization fiasco)
 
-> static (yerel) sınıf nesneleri için:
-static anahtar sözcüğü ile oluşturulan yerel değişkenler eğer onların oluşturuldukları fonksiyon çağırılmaz ise zaten hayata gelmeyecektir. Static nesneler bir kere çağırıldığında ömrü programın sonuna kadar devam eder.
+static (yerel) sınıf nesneleri için:
+- static anahtar sözcüğü ile oluşturulan yerel değişkenler eğer onların oluşturuldukları fonksiyon çağırılmaz ise zaten hayata gelmeyecektir. Static nesneler bir kere çağırıldığında ömrü programın sonuna kadar devam eder.
 
 ```
 #include <iostream>
@@ -3782,7 +3782,7 @@ int main()
 }
 ```
 
-> Dinamik ömürlü nesneler C++'da "new" operatörü ile hayata geritilir. Delete operatörü de nesnelerin hayatını bitirir.
+Dinamik ömürlü nesneler C++'da "new" operatörü ile hayata geritilir. Delete operatörü de nesnelerin hayatını bitirir.
 - new expression
 - delete expression
 
@@ -3796,7 +3796,7 @@ yazılarak bir nesne dinamik ömürlü oluşturulduğunda, derleyici tarafından
 ```
 void * operator new(std::size_t);
 //tıpkı malloc fonksiyonu gibidir.
-void* malloc(std::std_t);
+void* malloc(std::size_t);
 ```
 Aralarındaki fark malloc başarısız olduğunda null pointer döndürüyor, başarılı olduğunda allocate edilmiş bellek bloğunu döndürür. Operator new başarısız olduğunda "exception throw" verir.
 ```
@@ -3823,7 +3823,7 @@ public:
 int main()
 {
 	std::cout << "main basladi\n";
-	auto p = new Myclass; // auto Myclass* türünden olur.
+	auto p = new Myclass; // auto, Myclass* türünden olur.
 	p->func();
 
 	delete p; //dtor çağırılıyor.
@@ -3831,14 +3831,14 @@ int main()
 ```
 
 - Dinamik bir nesne için delete çağırılmaz ise memory sızıntısı olur ama sadece memory sızıntısı ile kalmaz. Destructor fonksiyonunun çağırılmaması çok daha farklı problemlere yol açabilir.
-> RAII -> resource acquisition is initialization
+- RAII -> resource acquisition is initialization
 
 Constructor bir çok sınıf türünün bir nesnenin kullanabilmesi için o nesne hayata getirildiğinde bir ya da birden fazla kaynağın o nesneye bağlanması o nesnenin o kaynağı ya da kaynakları kullanıyor durumuna getirilmesi sağlanıyor.
 Bu kaynak ya da kaynaklara terimsel olarak resources diyoruz. Bu resource bir bellek alanı olabilir, bir dosya olabilir, bir veri tabanı olabilir, bir mutex olabilir. Bir network bağlantısı olabilir. Nesnenin Destructor'ı çağırıldığında
 destructor bu kaynakları tipik olarak geri veriyor. Eğer destructor çağırılmaz ise bu durumda resource leak oluşur. Memory leak de bir resource leak sayılabilir. 
 
 
-> Default contructor aşağıdaki durumlarda çağırılı.
+- Default contructor aşağıdaki durumlarda çağırılı.
 ```
 Nec n1; // default init
 Nec n2{}; // value init
@@ -3848,7 +3848,7 @@ Nec x(); //!! function declaration olur.
 ```
 
 
-Bir sınıfın default contructor'ı olmak zorunda değildir. "not - declared"
+Bir sınıfın default contructor'ı olmak zorunda değildir. "not-declared"
 
 User-declared bir special member function'un bildirimini kendimiz yaparsak user-declared olarak adlandırılır. 
 User-declared alt kategorilere ayrılıyor:
@@ -3877,18 +3877,18 @@ public:
 };
 ```
 
-> implicitly declared: Aslında siz direk olarak bi class tanımladığınızda, special member funciton'larda 6'dsı da implicitly olarak tanımlanır. (defaulted, deleted olarak)
+- implicitly declared: Aslında siz direk olarak bi class tanımladığınızda, special member function'larda 6'dsı da implicitly olarak tanımlanır. (defaulted, deleted olarak)
 
 
-Yani özetle sınıfın special member function'ları aşağıdakilerden birine ilişkin olur:
+Yani özetle sınıfın special member function'ları aşağıdakilerden birine ilişkin olur:  
 - not declared
-- user-declared //programcı tarafından
-> user declared defined
-> user declared defaulted
-> user declared deleted
-- implicitly declared
-> defaulted
-> deleted
+- user-declared //programcı tarafından  
+-- user declared defined  
+-- user declared defaulted  
+-- user declared deleted  
+- implicitly declared  
+-- defaulted  
+-- deleted  
 
 
 ```
@@ -3938,7 +3938,7 @@ private:
 Tüm veri elemanları ctor initializer list ile initialize etmek zorunda değilsiniz. Ama initialize edilmeyen veri elemanları default initialize edilmiş olur. Bu durum primitive türden öğelerin çöp değerde kalması demektir. 
 Bu sebeple 1. tercihimiz veri elemanlarını ctor init list'te initialize etmek olmalıdır. Ctor fonksiyonu içinde atama(assignment) da yapılabilir ama tercih edilemez. 
 
-Her zaman veri elemanlarının hayata gelme sırası, class definition'daki sıradır. 
+Veri elemanlarının hayata gelme sırası, class definition'daki sıraya göre tercih edilmesi uygundur. 
 ```
 class Myclass {
 public:
